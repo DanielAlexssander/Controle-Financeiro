@@ -1,4 +1,4 @@
-import { Box, Flex, Button, useColorMode, HStack, Text, IconButton, Menu, MenuButton, MenuList, MenuItem, VStack } from '@chakra-ui/react';
+import { Box, Flex, Button, useColorMode, HStack, Text, IconButton, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
 import { MoonIcon, SunIcon, HamburgerIcon } from '@chakra-ui/icons';
 import { useCurrencyRates } from '../hooks/useCurrencyRates';
 
