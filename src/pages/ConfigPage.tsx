@@ -76,7 +76,7 @@ export const ConfigPage = () => {
   };
 
   return (
-    <Container maxW="800px" py={8}>
+    <Container maxW="800px" py={8} px={{ base: 4, md: 8 }}>
       <Heading mb={6}>Configurações</Heading>
 
       <VStack spacing={6} align="stretch">

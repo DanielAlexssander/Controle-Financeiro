@@ -99,7 +99,7 @@ export const ManagePage = () => {
   };
 
   return (
-    <Container maxW="1200px" py={8}>
+    <Container maxW="1200px" py={8} px={{ base: 4, md: 8 }}>
       <Heading mb={6}>Gerenciar Finanças</Heading>
 
       <Tabs colorScheme="blue">
@@ -130,7 +130,7 @@ export const ManagePage = () => {
                     <Box w="100%" p={4} borderWidth={1} borderRadius="md">
                       <Heading size="sm" mb={3}>Investimentos</Heading>
                       <VStack spacing={2}>
-                        <HStack w="100%">
+                        <VStack w="100%" spacing={2}>
                           <Input placeholder="Nome (ex: PETR4)" value={investmentForm.name} onChange={(e) => setInvestmentForm({ ...investmentForm, name: e.target.value })} />
                           <Select placeholder="Tipo" value={investmentForm.type} onChange={(e) => setInvestmentForm({ ...investmentForm, type: e.target.value })}>
                             <option value="Renda Variável">Renda Variável</option>
@@ -141,11 +141,13 @@ export const ManagePage = () => {
                             <option value="CS2">CS2</option>
                             <option value="Emprestimo">Emprestimo</option>
                           </Select>
-                          <NumberInput value={investmentForm.amount} onChange={(_, val) => setInvestmentForm({ ...investmentForm, amount: val })}>
-                            <NumberInputField placeholder="Valor" />
-                          </NumberInput>
-                          <IconButton aria-label="Add" icon={<AddIcon />} onClick={handleAddInvestment} />
-                        </HStack>
+                          <HStack w="100%">
+                            <NumberInput flex={1} value={investmentForm.amount} onChange={(_, val) => setInvestmentForm({ ...investmentForm, amount: val })}>
+                              <NumberInputField placeholder="Valor" />
+                            </NumberInput>
+                            <IconButton aria-label="Add" icon={<AddIcon />} onClick={handleAddInvestment} />
+                          </HStack>
+                        </VStack>
                         {bankForm.investments.map((inv, idx) => (
                           <HStack key={idx} w="100%" justify="space-between" p={2} bg={useColorMode().colorMode === 'dark' ? 'gray.700' : 'gray.50'} borderRadius="md">
                             <Box>{inv.name} ({inv.type}) - R$ {inv.amount}</Box>

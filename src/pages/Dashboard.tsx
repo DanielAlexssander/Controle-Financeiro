@@ -58,7 +58,7 @@ export const Dashboard = () => {
   }));
 
   return (
-    <Container maxW="1400px" py={8}>
+    <Container maxW="1400px" py={8} px={{ base: 4, md: 8 }}>
       <HStack justify="space-between" mb={6}>
         <Heading size="lg">Controle Financeiro</Heading>
         <Select w="150px" value={currency} onChange={(e) => setCurrency(e.target.value as Currency)}>

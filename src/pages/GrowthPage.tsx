@@ -44,14 +44,14 @@ export const GrowthPage = () => {
   });
 
   return (
-    <Container maxW="1200px" py={8}>
+    <Container maxW="1200px" py={8} px={{ base: 4, md: 8 }}>
       <Heading mb={6}>Crescimento Mensal do Patrimônio</Heading>
 
       <Card mb={6}>
         <CardBody>
           <Heading size="md" mb={4}>{editingMonth ? 'Editar' : 'Adicionar'} Mês</Heading>
           <VStack spacing={4}>
-            <HStack spacing={4} w="100%">
+            <VStack spacing={4} w="100%">
               <FormControl>
                 <FormLabel>Mês (MM/AAAA)</FormLabel>
                 <Input
@@ -69,14 +69,14 @@ export const GrowthPage = () => {
                   <NumberInputField />
                 </NumberInput>
               </FormControl>
-            </HStack>
-            <HStack spacing={4} w="100%">
+            </VStack>
+            <HStack spacing={4} w="100%" flexDir={{ base: 'column', sm: 'row' }}>
               {editingMonth && (
-                <Button colorScheme="red" onClick={() => { setEditingMonth(null); setMonthForm({ month: '', totalPatrimony: 0 }); }} flex={1}>
+                <Button colorScheme="red" onClick={() => { setEditingMonth(null); setMonthForm({ month: '', totalPatrimony: 0 }); }} flex={1} w="100%" p={2}>
                   Cancelar
                 </Button>
               )}
-              <Button colorScheme="blue" onClick={handleSubmit} flex={1}>
+              <Button colorScheme="blue" onClick={handleSubmit} flex={1} w="100%" p={2}>
                 {editingMonth ? 'Atualizar' : 'Adicionar'}
               </Button>
             </HStack>

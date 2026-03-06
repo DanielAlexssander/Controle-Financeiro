@@ -1,5 +1,5 @@
-import { Box, Flex, Button, useColorMode, HStack, Text } from '@chakra-ui/react';
-import { MoonIcon, SunIcon } from '@chakra-ui/icons';
+import { Box, Flex, Button, useColorMode, HStack, Text, IconButton, Menu, MenuButton, MenuList, MenuItem, VStack } from '@chakra-ui/react';
+import { MoonIcon, SunIcon, HamburgerIcon } from '@chakra-ui/icons';
 import { useCurrencyRates } from '../hooks/useCurrencyRates';
 
 interface NavbarProps {
@@ -9,13 +9,13 @@ interface NavbarProps {
 
 export const Navbar = ({ currentPage, onNavigate }: NavbarProps) => {
   const { colorMode, toggleColorMode } = useColorMode();
-
-  const { btcPrice, usdToBrl} = useCurrencyRates();
+  const { btcPrice, usdToBrl } = useCurrencyRates();
 
   return (
     <Box bg={colorMode === 'dark' ? 'gray.800' : 'white'} px={4} py={3} shadow="md">
       <Flex justify="space-between" align="center" maxW="1400px" mx="auto">
-        <HStack spacing={4}>
+        {/* Desktop Menu */}
+        <HStack spacing={4} display={{ base: 'none', md: 'flex' }}>
           <Button
             variant={currentPage === 'dashboard' ? 'solid' : 'ghost'}
             colorScheme="blue"
@@ -45,19 +45,41 @@ export const Navbar = ({ currentPage, onNavigate }: NavbarProps) => {
             Configurações
           </Button>
         </HStack>
-        <Box display="flex" alignItems="center" gap={6}>
-          <Box bg="black" color="white" px={3} py={1} borderRadius="md">
-            <Text fontWeight="bold" >BTC/USD:</Text>
-            <Text color="orange.500">${btcPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</Text>
+
+        {/* Mobile Menu */}
+        <Menu>
+          <MenuButton
+            as={IconButton}
+            icon={<HamburgerIcon />}
+            variant="ghost"
+            display={{ base: 'flex', md: 'none' }}
+          />
+          <MenuList>
+            <MenuItem onClick={() => onNavigate('dashboard')}>Dashboard</MenuItem>
+            <MenuItem onClick={() => onNavigate('manage')}>Gerenciar</MenuItem>
+            <MenuItem onClick={() => onNavigate('growth')}>Crescimento</MenuItem>
+            <MenuItem onClick={() => onNavigate('config')}>Configurações</MenuItem>
+          </MenuList>
+        </Menu>
+
+        {/* Quotes */}
+        <HStack spacing={{ base: 2, md: 6 }} display={{ base: 'none', sm: 'flex' }}>
+          <Box bg="black" color="white" px={{ base: 2, md: 3 }} py={1} borderRadius="md">
+            <Text fontWeight="bold" fontSize={{ base: 'xs', md: 'sm' }}>BTC/USD:</Text>
+            <Text color="orange.500" fontSize={{ base: 'xs', md: 'sm' }}>${btcPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</Text>
           </Box>
-          <Box bg="black" color="white" px={3} py={1} borderRadius="md">
-            <Text fontWeight="bold">USD/BRL:</Text>
-            <Text color="green.500">R$ {usdToBrl.toFixed(2)}</Text>
+          <Box bg="black" color="white" px={{ base: 2, md: 3 }} py={1} borderRadius="md">
+            <Text fontWeight="bold" fontSize={{ base: 'xs', md: 'sm' }}>USD/BRL:</Text>
+            <Text color="green.500" fontSize={{ base: 'xs', md: 'sm' }}>R$ {usdToBrl.toFixed(2)}</Text>
           </Box>
-        </Box>
-        <Button onClick={toggleColorMode} variant="ghost">
-          {colorMode === 'dark' ? <SunIcon /> : <MoonIcon />}
-        </Button>
+        </HStack>
+
+        <IconButton
+          icon={colorMode === 'dark' ? <SunIcon /> : <MoonIcon />}
+          onClick={toggleColorMode}
+          variant="ghost"
+          aria-label="Toggle theme"
+        />
       </Flex>
     </Box>
   );
