@@ -2,6 +2,7 @@ import {
   Container, Heading, Card, CardBody, VStack, FormControl, FormLabel,
   Switch, Button, useColorMode, useToast, Text, Divider, HStack, Box
 } from '@chakra-ui/react';
+import type { FinanceData } from '../types/index.js';
 
 export const ConfigPage = () => {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -16,8 +17,24 @@ export const ConfigPage = () => {
       a.href = url;
       a.download = `finance-backup-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
+      URL.revokeObjectURL(url);
       toast({ title: 'Dados exportados com sucesso', status: 'success', duration: 2000 });
+    } else {
+      toast({ title: 'Nenhum dado para exportar', status: 'warning', duration: 2000 });
     }
+  };
+
+  const validateImportedData = (data: any): data is FinanceData => {
+    return (
+      data &&
+      typeof data === 'object' &&
+      Array.isArray(data.banks) &&
+      Array.isArray(data.cryptos) &&
+      Array.isArray(data.loans) &&
+      Array.isArray(data.monthlyGrowth) &&
+      data.diversification &&
+      typeof data.diversification === 'object'
+    );
   };
 
   const handleImportData = () => {
@@ -26,14 +43,23 @@ export const ConfigPage = () => {
     input.accept = 'application/json';
     input.onchange = (e: any) => {
       const file = e.target.files[0];
+      if (!file) return;
+      
       const reader = new FileReader();
       reader.onload = (event: any) => {
         try {
           const data = JSON.parse(event.target.result);
+          
+          if (!validateImportedData(data)) {
+            toast({ title: 'Arquivo inválido', description: 'O formato dos dados não é compatível', status: 'error', duration: 3000 });
+            return;
+          }
+          
           localStorage.setItem('finance-data', JSON.stringify(data));
-          toast({ title: 'Dados importados! Recarregue a página', status: 'success', duration: 3000 });
+          toast({ title: 'Dados importados com sucesso!', status: 'success', duration: 2000 });
+          setTimeout(() => window.location.reload(), 1000);
         } catch (error) {
-          toast({ title: 'Erro ao importar dados', status: 'error', duration: 2000 });
+          toast({ title: 'Erro ao importar dados', description: 'Verifique se o arquivo é um JSON válido', status: 'error', duration: 3000 });
         }
       };
       reader.readAsText(file);
@@ -42,9 +68,10 @@ export const ConfigPage = () => {
   };
 
   const handleClearData = () => {
-    if (confirm('Tem certeza que deseja limpar todos os dados?')) {
+    if (confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.')) {
       localStorage.removeItem('finance-data');
-      toast({ title: 'Dados limpos! Recarregue a página', status: 'info', duration: 3000 });
+      toast({ title: 'Dados limpos com sucesso!', status: 'info', duration: 2000 });
+      setTimeout(() => window.location.reload(), 1000);
     }
   };
 
