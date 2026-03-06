@@ -1,0 +1,83 @@
+{
+  "banks": [
+    {
+      "id": "1",
+      "name": "Banco Inter",
+      "balance": 5000,
+      "investments": [
+        {
+          "id": "1",
+          "name": "CDI",
+          "amount": 10000,
+          "type": "Renda Fixa"
+        },
+        {
+          "id": "2",
+          "name": "PETR4",
+          "amount": 3000,
+          "type": "Ação"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "name": "Nubank",
+      "balance": 8000,
+      "investments": [
+        {
+          "id": "3",
+          "name": "LCI",
+          "amount": 15000,
+          "type": "Renda Fixa"
+        }
+      ]
+    }
+  ],
+  "cryptos": [
+    {
+      "id": "1",
+      "symbol": "BTC",
+      "amount": 0.05,
+      "purchasePrice": 45000
+    },
+    {
+      "id": "2",
+      "symbol": "ETH",
+      "amount": 2,
+      "purchasePrice": 2500
+    }
+  ],
+  "loans": [
+    {
+      "id": "1",
+      "name": "Financiamento Carro",
+      "amount": 25000,
+      "interestRate": 1.5,
+      "monthlyPayment": 850
+    }
+  ],
+  "monthlyGrowth": [
+    {
+      "month": "01/2024",
+      "totalPatrimony": 35000
+    },
+    {
+      "month": "02/2024",
+      "totalPatrimony": 38000
+    },
+    {
+      "month": "03/2024",
+      "totalPatrimony": 41000
+    },
+    {
+      "month": "04/2024",
+      "totalPatrimony": 43500
+    }
+  ],
+  "diversification": {
+    "stocks": 30,
+    "crypto": 20,
+    "fixedIncome": 40,
+    "cash": 10
+  }
+}
