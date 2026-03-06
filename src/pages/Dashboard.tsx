@@ -12,7 +12,7 @@ import type { Currency } from '../types/index.js';
 
 export const Dashboard = () => {
   const { data } = useFinance();
-  const { usdToBrl, loading } = useCurrencyRates();
+  const { usdToBrl } = useCurrencyRates();
   const { getTotalValue, getCryptoValue } = useAllCryptoPrices(data.cryptos);
   const [currency, setCurrency] = useState<Currency>('BRL');
   const { colorMode } = useColorMode();

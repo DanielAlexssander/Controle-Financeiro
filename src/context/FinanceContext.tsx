@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { FinanceData, Bank, Crypto, Loan, MonthlyGrowth } from '../types/index.js';
 
 interface FinanceContextType {
