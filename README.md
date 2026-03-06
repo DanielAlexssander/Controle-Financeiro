@@ -1,73 +1,114 @@
-# React + TypeScript + Vite
+# Sistema de Controle Financeiro Pessoal
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema completo de gestão financeira pessoal desenvolvido com React, TypeScript, Vite e Chakra UI.
 
-Currently, two official plugins are available:
+## 🚀 Funcionalidades
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 📊 Dashboard
+- Visualização completa do patrimônio total
+- Conversão entre BRL e USD em tempo real
+- Cotações ao vivo de BTC/USD e USD/BRL
+- Gráfico de diversificação de investimentos
+- Gráfico de crescimento mensal do patrimônio
+- Listagem detalhada de bancos e investimentos
+- Carteira de criptomoedas com valores em USD
 
-## React Compiler
+### 🏦 Gerenciamento de Bancos
+- Adicionar múltiplos bancos
+- Registrar saldo em conta
+- Adicionar investimentos dentro de cada banco (ações, CDI, LCI, etc.)
+- Editar e excluir bancos e investimentos
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 💰 Carteira de Criptomoedas
+- Adicionar criptomoedas (valores sempre em USD)
+- Registrar quantidade e preço de compra
+- Visualizar valor total investido
+- Editar e excluir criptomoedas
 
-## Expanding the ESLint configuration
+### 💳 Controle de Empréstimos
+- Registrar empréstimos
+- Acompanhar taxa de juros e parcelas mensais
+- Editar e excluir empréstimos
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 📈 Crescimento Mensal
+- Registrar patrimônio total mês a mês
+- Visualizar crescimento percentual entre meses
+- Gráfico de evolução patrimonial
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### ⚙️ Configurações
+- Alternar entre tema claro e escuro
+- Exportar dados (backup em JSON)
+- Importar dados
+- Limpar todos os dados
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🛠️ Tecnologias
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **React 19** - Framework UI
+- **TypeScript** - Tipagem estática
+- **Vite** - Build tool
+- **Chakra UI** - Biblioteca de componentes
+- **Recharts** - Gráficos interativos
+- **Axios** - Requisições HTTP
+- **LocalStorage** - Persistência de dados
+
+## 📦 Instalação
+
+```bash
+# Instalar dependências
+npm install
+
+# Executar em desenvolvimento
+npm run dev
+
+# Build para produção
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🎨 Estrutura do Projeto
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+src/
+├── components/       # Componentes reutilizáveis
+│   └── Navbar.tsx
+├── context/         # Contextos React
+│   ├── FinanceContext.tsx
+│   └── themecontext.tsx
+├── hooks/           # Hooks customizados
+│   └── useCurrencyRates.ts
+├── pages/           # Páginas da aplicação
+│   ├── Dashboard.tsx
+│   ├── ManagePage.tsx
+│   ├── GrowthPage.tsx
+│   └── ConfigPage.tsx
+├── services/        # Serviços e APIs
+│   └── api.ts
+├── theme/           # Configuração de tema
+│   ├── colors.ts
+│   └── theme.ts
+├── types/           # Tipos TypeScript
+│   └── index.ts
+└── utils/           # Utilitários
+```
+
+## 🔑 APIs Utilizadas
+
+- **CoinMarketCap API** - Cotações de criptomoedas
+- **ExchangeRate API** - Conversão USD/BRL
+
+## 💾 Armazenamento
+
+Todos os dados são salvos automaticamente no LocalStorage do navegador. Use a função de exportar dados para criar backups regulares.
+
+## 🎯 Como Usar
+
+1. **Dashboard**: Visualize seu patrimônio total e acompanhe cotações
+2. **Gerenciar**: Adicione bancos, criptomoedas, empréstimos e configure diversificação
+3. **Crescimento**: Registre o patrimônio total de cada mês
+4. **Configurações**: Personalize o tema e gerencie seus dados
+
+## 📝 Notas
+
+- Valores de bancos e empréstimos são em BRL
+- Valores de criptomoedas são sempre em USD
+- As cotações são atualizadas automaticamente a cada minuto
+- A diversificação deve somar 100%
