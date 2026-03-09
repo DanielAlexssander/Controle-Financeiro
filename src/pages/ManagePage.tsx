@@ -15,6 +15,7 @@ export const ManagePage = () => {
   const [bankForm, setBankForm] = useState<Bank>({ id: '', name: '', balance: 0, investments: [] });
   const [editingBank, setEditingBank] = useState<string | null>(null);
   const [investmentForm, setInvestmentForm] = useState<Investment>({ id: '', name: '', amount: 0, type: '' });
+  const [editingInvestment, setEditingInvestment] = useState<number | null>(null);
 
   const [cryptoForm, setCryptoForm] = useState<Crypto>({ id: '', symbol: '', amount: 0, purchasePrice: 0 });
   const [editingCrypto, setEditingCrypto] = useState<string | null>(null);
@@ -32,10 +33,17 @@ export const ManagePage = () => {
     
     if (investmentForm.name || investmentForm.amount > 0 || investmentForm.type) {
       if (investmentForm.name && investmentForm.amount > 0 && investmentForm.type) {
-        finalBankForm = {
-          ...finalBankForm,
-          investments: [...finalBankForm.investments, { ...investmentForm, id: Date.now().toString() }]
-        };
+        if (editingInvestment !== null) {
+          const updatedInvestments = [...finalBankForm.investments];
+          updatedInvestments[editingInvestment] = { ...investmentForm, id: investmentForm.id || Date.now().toString() };
+          finalBankForm = { ...finalBankForm, investments: updatedInvestments };
+          setEditingInvestment(null);
+        } else {
+          finalBankForm = {
+            ...finalBankForm,
+            investments: [...finalBankForm.investments, { ...investmentForm, id: Date.now().toString() }]
+          };
+        }
         setInvestmentForm({ id: '', name: '', amount: 0, type: '' });
       } else {
         toast({ title: 'Complete ou limpe o campo do investimento', status: 'error', duration: 2000 });
@@ -52,17 +60,28 @@ export const ManagePage = () => {
       toast({ title: 'Banco adicionado', status: 'success', duration: 2000 });
     }
     setBankForm({ id: '', name: '', balance: 0, investments: [] });
+    setInvestmentForm({ id: '', name: '', amount: 0, type: '' });
+    setEditingInvestment(null);
   };
 
   const handleAddInvestment = () => {
-    if (!investmentForm.name || investmentForm.amount <= 0) {
+    if (!investmentForm.name || investmentForm.amount <= 0 || !investmentForm.type) {
       toast({ title: 'Preencha os dados do investimento', status: 'error', duration: 2000 });
       return;
     }
-    setBankForm({
-      ...bankForm,
-      investments: [...bankForm.investments, { ...investmentForm, id: Date.now().toString() }]
-    });
+    
+    if (editingInvestment !== null) {
+      const updatedInvestments = [...bankForm.investments];
+      updatedInvestments[editingInvestment] = { ...investmentForm, id: investmentForm.id || Date.now().toString() };
+      setBankForm({ ...bankForm, investments: updatedInvestments });
+      setEditingInvestment(null);
+      toast({ title: 'Investimento atualizado', status: 'success', duration: 2000 });
+    } else {
+      setBankForm({
+        ...bankForm,
+        investments: [...bankForm.investments, { ...investmentForm, id: Date.now().toString() }]
+      });
+    }
     setInvestmentForm({ id: '', name: '', amount: 0, type: '' });
   };
 
@@ -145,13 +164,19 @@ export const ManagePage = () => {
                             <NumberInput flex={1} value={investmentForm.amount} onChange={(_, val) => setInvestmentForm({ ...investmentForm, amount: val })}>
                               <NumberInputField placeholder="Valor" />
                             </NumberInput>
-                            <IconButton aria-label="Add" icon={<AddIcon />} onClick={handleAddInvestment} />
+                            <IconButton aria-label={editingInvestment !== null ? "Update" : "Add"} icon={<AddIcon />} colorScheme={editingInvestment !== null ? "green" : "blue"} onClick={handleAddInvestment} />
+                            {editingInvestment !== null && (
+                              <IconButton aria-label="Cancel" icon={<DeleteIcon />} colorScheme="red" onClick={() => { setEditingInvestment(null); setInvestmentForm({ id: '', name: '', amount: 0, type: '' }); }} />
+                            )}
                           </HStack>
                         </VStack>
                         {bankForm.investments.map((inv, idx) => (
                           <HStack key={idx} w="100%" justify="space-between" p={2} bg={useColorMode().colorMode === 'dark' ? 'gray.700' : 'gray.50'} borderRadius="md">
                             <Box>{inv.name} ({inv.type}) - R$ {inv.amount}</Box>
-                            <IconButton size="sm" aria-label="Remove" icon={<DeleteIcon />} onClick={() => setBankForm({ ...bankForm, investments: bankForm.investments.filter((_, i) => i !== idx) })} />
+                            <HStack>
+                              <IconButton size="sm" aria-label="Edit" icon={<EditIcon />} onClick={() => { setInvestmentForm(inv); setEditingInvestment(idx); }} />
+                              <IconButton size="sm" aria-label="Remove" icon={<DeleteIcon />} colorScheme="red" onClick={() => setBankForm({ ...bankForm, investments: bankForm.investments.filter((_, i) => i !== idx) })} />
+                            </HStack>
                           </HStack>
                         ))}
                       </VStack>
