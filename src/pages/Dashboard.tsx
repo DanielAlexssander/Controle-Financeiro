@@ -180,6 +180,84 @@ export const Dashboard = () => {
     return { change, avgChange, lastValue };
   }, [data.monthlyGrowth]);
 
+  // Crypto distribution pie chart data
+  // Cores fixas para criptomoedas baseadas nas logos
+  const cryptoColors: Record<string, string> = {
+    BTC: '#F7931A',  // Laranja Bitcoin
+    USDT: '#26A17B', // Verde Tether
+    ETH: '#627EEA',  // Roxo/Azul Ethereum
+  };
+
+  const cryptoPieData = useMemo(() => {
+    // Agrupa criptomoedas pelo símbolo
+    const grouped = data.cryptos.reduce((acc, crypto) => {
+      const value = getCryptoValue(crypto.symbol, crypto.amount);
+      acc[crypto.symbol] = parseFloat(((acc[crypto.symbol] || 0) + value).toFixed(2));
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const entries = Object.entries(grouped);
+    const total = parseFloat(entries.reduce((sum, [, value]) => sum + value, 0).toFixed(2));
+    
+    // Aplica cores fixas para moedas conhecidas, ou usa chartColors para outras
+    let fallbackIndex = 0;
+    const backgroundColors = entries.map(([symbol]) => {
+      if (cryptoColors[symbol.toUpperCase()]) {
+        return cryptoColors[symbol.toUpperCase()];
+      }
+      return chartColors[fallbackIndex++ % chartColors.length];
+    });
+    
+    return {
+      labels: entries.map(([symbol]) => symbol),
+      datasets: [{
+        data: entries.map(([, value]) => parseFloat(value.toFixed(2))),
+        backgroundColor: backgroundColors,
+        borderColor: colors.bgCard,
+        borderWidth: 3,
+        hoverBorderWidth: 0,
+        hoverOffset: 8,
+      }],
+      total,
+    };
+  }, [data.cryptos, getCryptoValue, chartColors, colors.bgCard]);
+
+  const cryptoPieOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '70%',
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+        labels: {
+          color: colors.text,
+          padding: 16,
+          usePointStyle: true,
+          pointStyle: 'circle',
+          font: { size: 12, weight: 500 as const },
+        },
+      },
+      tooltip: {
+        backgroundColor: colors.bgCard,
+        titleColor: colors.text,
+        bodyColor: colors.textSecondary,
+        borderColor: colors.border,
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 8,
+        callbacks: {
+          label: (context: any) => {
+            const value = context.raw;
+            const percentage = cryptoPieData.total > 0 
+              ? ((value / cryptoPieData.total) * 100).toFixed(1) 
+              : '0.0';
+            return `$${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percentage}%)`;
+          },
+        },
+      },
+    },
+  };
+
   const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -450,70 +528,97 @@ export const Dashboard = () => {
 
         {/* Crypto Wallet */}
         {data.cryptos.length > 0 && (
-          <Card>
-            <CardHeader>
-              <Flex align="center" gap={3}>
-                <Icon as={FaBitcoin} color={colors.warning} />
-                <Heading size="md" fontWeight="700">Carteira de Criptomoedas</Heading>
-                <Badge colorScheme="orange" borderRadius="full" px={2}>
-                  {data.cryptos.length}
-                </Badge>
-              </Flex>
-            </CardHeader>
-            <CardBody>
-              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
-                {data.cryptos.map(crypto => {
-                  const currentValue = getCryptoValue(crypto.symbol, crypto.amount);
-                  const investedValue = crypto.purchasePrice * crypto.amount;
-                  const profit = currentValue - investedValue;
-                  const profitPercentage = investedValue > 0 ? (profit / investedValue) * 100 : 0;
-                  
-                  return (
-                    <Box 
-                      key={crypto.id} 
-                      p={4} 
-                      borderRadius="lg"
-                      bg={colors.bgInput}
-                      borderWidth={1}
-                      borderColor={colors.border}
-                    >
-                      <Flex justify="space-between" align="start">
-                        <VStack align="start" spacing={1}>
-                          <HStack>
-                            <Text fontWeight="700" fontSize="lg">{crypto.symbol}</Text>
-                            <Badge 
-                              colorScheme={profitPercentage >= 0 ? 'green' : 'red'} 
-                              borderRadius="full"
-                              px={2}
-                            >
-                              <HStack spacing={1}>
-                                <Icon 
-                                  as={profitPercentage >= 0 ? FaArrowUp : FaArrowDown} 
-                                  boxSize={2} 
-                                />
-                                <Text>{Math.abs(profitPercentage).toFixed(1)}%</Text>
-                              </HStack>
-                            </Badge>
-                          </HStack>
-                          <Text fontSize="sm" color={colors.textMuted}>
-                            {crypto.amount} unidade(s)
-                          </Text>
-                        </VStack>
-                        <VStack align="end" spacing={1}>
-                          <Text fontWeight="700" color={colors.warning}>
-                            ${currentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </Text>
-                          <Text fontSize="xs" color={colors.textMuted}>
-                            Compra: ${crypto.purchasePrice.toFixed(2)}/un
-                          </Text>
-                        </VStack>
-                      </Flex>
-                    </Box>
-                  );
-                })}
-              </SimpleGrid>
-            </CardBody>
-          </Card>
+          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
+            {/* Crypto List */}
+            <Card>
+              <CardHeader>
+                <Flex align="center" gap={3}>
+                  <Icon as={FaBitcoin} color={colors.warning} />
+                  <Heading size="md" fontWeight="700">Carteira de Criptomoedas</Heading>
+                  <Badge colorScheme="orange" borderRadius="full" px={2}>
+                    {data.cryptos.length}
+                  </Badge>
+                </Flex>
+              </CardHeader>
+              <CardBody>
+                <VStack align="stretch" spacing={3} maxH="400px" overflowY="auto" pr={2}>
+                  {data.cryptos.map(crypto => {
+                    const currentValue = parseFloat(getCryptoValue(crypto.symbol, crypto.amount).toFixed(2));
+                    const investedValue = parseFloat((crypto.purchasePrice * crypto.amount).toFixed(2));
+                    const profit = parseFloat((currentValue - investedValue).toFixed(2));
+                    const profitPercentage = investedValue > 0 ? parseFloat(((profit / investedValue) * 100).toFixed(2)) : 0;
+                    
+                    return (
+                      <Box 
+                        key={crypto.id} 
+                        p={4} 
+                        borderRadius="lg"
+                        bg={colors.bgInput}
+                        borderWidth={1}
+                        borderColor={colors.border}
+                      >
+                        <Flex justify="space-between" align="start">
+                          <VStack align="start" spacing={1}>
+                            <HStack>
+                              <Text fontWeight="700" fontSize="lg">{crypto.symbol}</Text>
+                              <Badge 
+                                colorScheme={profitPercentage >= 0 ? 'green' : 'red'} 
+                                borderRadius="full"
+                                px={2}
+                              >
+                                <HStack spacing={1}>
+                                  <Icon 
+                                    as={profitPercentage >= 0 ? FaArrowUp : FaArrowDown} 
+                                    boxSize={2} 
+                                  />
+                                  <Text>{Math.abs(profitPercentage).toFixed(2)}%</Text>
+                                </HStack>
+                              </Badge>
+                            </HStack>
+                            <Text fontSize="sm" color={colors.textMuted}>
+                              {crypto.amount} unidade(s)
+                            </Text>
+                          </VStack>
+                          <VStack align="end" spacing={1}>
+                            <Text fontWeight="700" color={colors.warning}>
+                              ${currentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </Text>
+                            <Text fontSize="xs" color={colors.textMuted}>
+                              Compra: ${crypto.purchasePrice.toFixed(2)}/un
+                            </Text>
+                          </VStack>
+                        </Flex>
+                      </Box>
+                    );
+                  })}
+                </VStack>
+              </CardBody>
+            </Card>
+
+            {/* Crypto Distribution Pie Chart */}
+            <Card>
+              <CardHeader pb={2}>
+                <Heading size="md" fontWeight="700">Distribuição de Criptomoedas</Heading>
+              </CardHeader>
+              <CardBody>
+                <Box h="350px" position="relative">
+                  <Doughnut data={cryptoPieData} options={cryptoPieOptions} />
+                  <VStack
+                    position="absolute"
+                    top="50%"
+                    left="50%"
+                    transform="translate(-50%, -70%)"
+                    spacing={0}
+                  >
+                    <Text fontSize="sm" color={colors.textMuted}>Total</Text>
+                    <Text fontSize="xl" fontWeight="700" color={colors.warning}>
+                      ${cryptoPieData.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </Text>
+                  </VStack>
+                </Box>
+              </CardBody>
+            </Card>
+          </SimpleGrid>
         )}
       </Container>
     </Box>
