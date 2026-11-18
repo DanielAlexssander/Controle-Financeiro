@@ -1,11 +1,12 @@
+import { PageHeader } from '../components/PageHeader';
 import {
-  Box, Container, Heading, Card, CardBody, CardHeader, VStack,
+  Box, Heading, Card, CardBody, CardHeader, VStack,
   Switch, Button, useColorMode, useToast, Text, Divider, HStack, Icon, Flex,
   Badge, SimpleGrid, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader,
   AlertDialogContent, AlertDialogOverlay, useDisclosure
 } from '@chakra-ui/react';
 import { useRef } from 'react';
-import { FaMoon, FaSun, FaDownload, FaUpload, FaTrash, FaInfoCircle, FaShieldAlt, FaDatabase, FaGithub } from 'react-icons/fa';
+import { LuMoon, LuSun, LuDownload, LuUpload, LuTrash2, LuInfo, LuShieldCheck, LuDatabase, LuGithub } from 'react-icons/lu';
 import { lightColors, darkColors } from '../theme/colors';
 import type { FinanceData } from '../types/index.js';
 import { AiSettingsCard } from '../components/AiChat/AiSettingsCard';
@@ -118,23 +119,15 @@ export const ConfigPage = () => {
   const storageInfo = getStorageInfo();
 
   return (
-    <Box minH="100vh" bg={colors.bg} pb={10}>
-      <Container maxW="900px" py={8} px={{ base: 4, md: 8 }}>
-        <Box mb={8}>
-          <Heading size="xl" fontWeight="800" letterSpacing="-0.03em">
-            Configurações
-          </Heading>
-          <Text color={colors.textSecondary} mt={1}>
-            Personalize sua experiência
-          </Text>
-        </Box>
+    <div className="page settings-page">
+        <PageHeader title="Configurações" description="Personalize a aparência, configure o assistente e gerencie seus dados." />
 
         <VStack spacing={6} align="stretch">
           {/* Appearance */}
           <Card>
             <CardHeader pb={2}>
               <Flex align="center" gap={2}>
-                <Icon as={colorMode === 'dark' ? FaMoon : FaSun} color={colors.primary} />
+                <Icon as={colorMode === 'dark' ? LuMoon : LuSun} color={colors.primary} />
                 <Heading size="md" fontWeight="700">Aparência</Heading>
               </Flex>
             </CardHeader>
@@ -153,14 +146,14 @@ export const ConfigPage = () => {
                   </Text>
                 </Box>
                 <HStack spacing={3}>
-                  <Icon as={FaSun} color={colorMode === 'light' ? colors.warning : colors.textMuted} />
-                  <Switch 
+                  <Icon as={LuSun} color={colorMode === 'light' ? colors.warning : colors.textMuted} />
+                  <Switch aria-label="Usar tema escuro"
                     isChecked={colorMode === 'dark'} 
                     onChange={toggleColorMode} 
                     colorScheme="brand"
                     size="lg"
                   />
-                  <Icon as={FaMoon} color={colorMode === 'dark' ? colors.primary : colors.textMuted} />
+                  <Icon as={LuMoon} color={colorMode === 'dark' ? colors.primary : colors.textMuted} />
                 </HStack>
               </Flex>
             </CardBody>
@@ -172,7 +165,7 @@ export const ConfigPage = () => {
           <Card>
             <CardHeader pb={2}>
               <Flex align="center" gap={2}>
-                <Icon as={FaDatabase} color={colors.accent} />
+                <Icon as={LuDatabase} color={colors.accent} />
                 <Heading size="md" fontWeight="700">Gerenciar Dados</Heading>
               </Flex>
             </CardHeader>
@@ -204,7 +197,7 @@ export const ConfigPage = () => {
 
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
                   <Button 
-                    leftIcon={<FaDownload />} 
+                    leftIcon={<LuDownload />}
                     colorScheme="brand"
                     size="lg"
                     onClick={handleExportData}
@@ -212,8 +205,9 @@ export const ConfigPage = () => {
                     Exportar Backup
                   </Button>
                   <Button 
-                    leftIcon={<FaUpload />} 
-                    colorScheme="green"
+                    leftIcon={<LuUpload />}
+                    colorScheme="brand"
+                    variant="outline"
                     size="lg"
                     onClick={handleImportData}
                   >
@@ -224,7 +218,7 @@ export const ConfigPage = () => {
                 <Divider my={2} />
 
                 <Button 
-                  leftIcon={<FaTrash />} 
+                  leftIcon={<LuTrash2 />}
                   colorScheme="red"
                   variant="outline"
                   size="lg"
@@ -242,7 +236,7 @@ export const ConfigPage = () => {
                   borderWidth={1}
                   borderColor={`${colors.warning}30`}
                 >
-                  <Icon as={FaShieldAlt} color={colors.warning} />
+                  <Icon as={LuShieldCheck} color={colors.warning} />
                   <Text fontSize="sm" color={colors.textSecondary}>
                     Seus dados são armazenados localmente no navegador. Faça backups regulares para evitar perdas.
                   </Text>
@@ -255,7 +249,7 @@ export const ConfigPage = () => {
           <Card>
             <CardHeader pb={2}>
               <Flex align="center" gap={2}>
-                <Icon as={FaInfoCircle} color={colors.success} />
+                <Icon as={LuInfo} color={colors.success} />
                 <Heading size="md" fontWeight="700">Sobre</Heading>
               </Flex>
             </CardHeader>
@@ -294,7 +288,7 @@ export const ConfigPage = () => {
                   as="a"
                   href="https://github.com/DanielAlexssander/Controle-Financeiro"
                   target="_blank"
-                  leftIcon={<FaGithub />}
+                  leftIcon={<LuGithub />}
                   variant="outline"
                   size="lg"
                 >
@@ -304,7 +298,6 @@ export const ConfigPage = () => {
             </CardBody>
           </Card>
         </VStack>
-      </Container>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog
@@ -326,7 +319,7 @@ export const ConfigPage = () => {
                 </Text>
                 <Box p={3} borderRadius="lg" bg={`${colors.danger}15`} borderWidth={1} borderColor={`${colors.danger}30`}>
                   <Text fontSize="sm" color={colors.danger} fontWeight="500">
-                    ⚠️ Recomendamos fazer um backup antes de continuar.
+                    Recomendamos fazer um backup antes de continuar.
                   </Text>
                 </Box>
               </VStack>
@@ -343,6 +336,6 @@ export const ConfigPage = () => {
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-    </Box>
+    </div>
   );
 };

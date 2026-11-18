@@ -49,7 +49,9 @@ export const ChatMessage = ({ mensagem }: { mensagem: ChatMensagem }) => {
         px={4}
         py={3}
         borderRadius="xl"
-        bg={doUsuario ? colors.primary : colors.bgInput}
+        bg={doUsuario ? '#29553f' : colors.bgInput}
+        borderBottomRightRadius={doUsuario ? '3px' : 'xl'}
+        borderBottomLeftRadius={doUsuario ? 'xl' : '3px'}
         color={doUsuario ? 'white' : mensagem.estado === 'erro' ? colors.danger : colors.text}
         fontSize="sm"
         wordBreak="break-word"

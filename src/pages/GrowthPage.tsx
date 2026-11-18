@@ -1,19 +1,18 @@
+import { PageHeader } from '../components/PageHeader';
 import { useState, useMemo } from 'react';
 import {
-  Box, Container, Heading, VStack, HStack, Card, CardBody, CardHeader,
+  Box, Heading, VStack, HStack, Card, CardBody, CardHeader,
   Button, FormControl, FormLabel, Input, NumberInput, NumberInputField,
   useToast, SimpleGrid, Text, IconButton, Flex, Badge, Stat, StatLabel,
   StatNumber, StatHelpText, StatArrow, useColorMode
 } from '@chakra-ui/react';
 import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
-import { FaChartLine, FaCalendarAlt, FaArrowUp, FaArrowDown, FaPlus, FaSave, FaTimes } from 'react-icons/fa';
+import { HistoryChart } from '../components/FinanceCharts';
+import { LuChartNoAxesCombined, LuCalendarDays, LuArrowUpRight, LuArrowDownRight, LuPlus, LuSave, LuX } from 'react-icons/lu';
 import { useFinance } from '../context/FinanceContext';
 import { lightColors, darkColors } from '../theme/colors';
 import type { MonthlyGrowth } from '../types/index.js';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
 export const GrowthPage = () => {
   const { data, addMonthlyGrowth, deleteMonthlyGrowth } = useFinance();
@@ -93,108 +92,14 @@ export const GrowthPage = () => {
     return { totalGrowth, avgGrowth, maxGrowth, maxMonth, minGrowth, minMonth, lastValue };
   }, [sortedGrowth]);
 
-  // Chart data
-  const lineChartData = useMemo(() => ({
-    labels: sortedGrowth.map(g => g.month),
-    datasets: [{
-      label: 'Patrimônio',
-      data: sortedGrowth.map(g => g.totalPatrimony),
-      fill: true,
-      backgroundColor: `${colors.primary}20`,
-      borderColor: colors.primary,
-      borderWidth: 3,
-      pointBackgroundColor: colors.primary,
-      pointBorderColor: colors.bgCard,
-      pointBorderWidth: 2,
-      pointRadius: 6,
-      pointHoverRadius: 10,
-      tension: 0.4,
-    }],
-  }), [sortedGrowth, colors]);
-
-  const barChartData = useMemo(() => {
-    const changes = sortedGrowth.slice(1).map((g, i) => ({
-      month: g.month,
-      change: ((g.totalPatrimony - sortedGrowth[i].totalPatrimony) / sortedGrowth[i].totalPatrimony) * 100
-    }));
-    
-    return {
-      labels: changes.map(c => c.month),
-      datasets: [{
-        label: 'Variação %',
-        data: changes.map(c => c.change),
-        backgroundColor: changes.map(c => c.change >= 0 ? `${colors.success}80` : `${colors.danger}80`),
-        borderColor: changes.map(c => c.change >= 0 ? colors.success : colors.danger),
-        borderWidth: 2,
-        borderRadius: 8,
-      }],
-    };
-  }, [sortedGrowth, colors]);
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: colors.bgCard,
-        titleColor: colors.text,
-        bodyColor: colors.textSecondary,
-        borderColor: colors.border,
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-      },
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: { color: colors.textMuted, font: { size: 11 } },
-      },
-      y: {
-        grid: { color: colors.border, drawBorder: false },
-        ticks: { color: colors.textMuted, font: { size: 11 } },
-      },
-    },
-  };
-
-  const lineOptions = {
-    ...chartOptions,
-    plugins: {
-      ...chartOptions.plugins,
-      tooltip: {
-        ...chartOptions.plugins.tooltip,
-        callbacks: {
-          label: (context: any) => `R$ ${context.raw.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        },
-      },
-    },
-  };
-
-  const barOptions = {
-    ...chartOptions,
-    plugins: {
-      ...chartOptions.plugins,
-      tooltip: {
-        ...chartOptions.plugins.tooltip,
-        callbacks: {
-          label: (context: any) => `${context.raw >= 0 ? '+' : ''}${context.raw.toFixed(2)}%`,
-        },
-      },
-    },
-  };
+  const changes = sortedGrowth.slice(1).map((record, index) => {
+    const previous = sortedGrowth[index].totalPatrimony;
+    return (record.totalPatrimony - previous) / previous * 100;
+  });
 
   return (
-    <Box minH="100vh" bg={colors.bg} pb={10}>
-      <Container maxW="1400px" py={8} px={{ base: 4, md: 8 }}>
-        <Box mb={8}>
-          <Heading size="xl" fontWeight="800" letterSpacing="-0.03em">
-            Crescimento Mensal
-          </Heading>
-          <Text color={colors.textSecondary} mt={1}>
-            Acompanhe a evolução do seu patrimônio
-          </Text>
-        </Box>
+    <div className="page">
+        <PageHeader title="Crescimento mensal" description="Registre o patrimônio de cada mês e acompanhe sua evolução." />
 
         {/* Stats Cards */}
         {stats && (
@@ -252,7 +157,7 @@ export const GrowthPage = () => {
           <Card>
             <CardHeader>
               <Flex align="center" gap={2}>
-                <FaCalendarAlt color={colors.primary} />
+                <LuCalendarDays color={colors.primary} />
                 <Heading size="md" fontWeight="700">
                   {editingMonth ? 'Editar Mês' : 'Novo Registro'}
                 </Heading>
@@ -289,7 +194,7 @@ export const GrowthPage = () => {
                       flex={1} 
                       variant="outline" 
                       colorScheme="red"
-                      leftIcon={<FaTimes />}
+                      leftIcon={<LuX />}
                       onClick={() => {
                         setEditingMonth(null);
                         setMonthForm({ month: '', totalPatrimony: 0 });
@@ -301,7 +206,7 @@ export const GrowthPage = () => {
                   <Button 
                     flex={1} 
                     colorScheme="brand" 
-                    leftIcon={editingMonth ? <FaSave /> : <FaPlus />}
+                    leftIcon={editingMonth ? <LuSave /> : <LuPlus />}
                     onClick={handleSubmit}
                   >
                     {editingMonth ? 'Salvar' : 'Adicionar'}
@@ -315,19 +220,18 @@ export const GrowthPage = () => {
           <Card gridColumn={{ lg: 'span 2' }}>
             <CardHeader>
               <Flex align="center" gap={2}>
-                <FaChartLine color={colors.primary} />
+                <LuChartNoAxesCombined color={colors.primary} />
                 <Heading size="md" fontWeight="700">Evolução Patrimonial</Heading>
               </Flex>
             </CardHeader>
             <CardBody pt={0}>
               {sortedGrowth.length > 0 ? (
-                <Box h="300px">
-                  <Line data={lineChartData} options={lineOptions} />
+                <Box>
+                  <HistoryChart months={sortedGrowth.map(g => g.month)} values={sortedGrowth.map(g => g.totalPatrimony)} />
                 </Box>
               ) : (
-                <Flex h="300px" align="center" justify="center">
-                  <Text color={colors.textMuted}>Adicione registros para ver o gráfico</Text>
-                </Flex>
+                <div className="empty-state"><span className="empty-icon"><LuChartNoAxesCombined /></span>
+                  <strong>Seu histórico começa aqui</strong><p>Adicione um registro mensal para ver o gráfico.</p></div>
               )}
             </CardBody>
           </Card>
@@ -340,8 +244,8 @@ export const GrowthPage = () => {
               <Heading size="md" fontWeight="700">Variação Mensal (%)</Heading>
             </CardHeader>
             <CardBody>
-              <Box h="250px">
-                <Bar data={barChartData} options={barOptions} />
+              <Box>
+                <HistoryChart months={sortedGrowth.slice(1).map(g => g.month)} values={changes} bars />
               </Box>
             </CardBody>
           </Card>
@@ -353,13 +257,13 @@ export const GrowthPage = () => {
             <CardHeader>
               <Flex justify="space-between" align="center">
                 <Heading size="md" fontWeight="700">Histórico</Heading>
-                <Badge colorScheme="purple" borderRadius="full" px={3}>
+                <Badge colorScheme="brand" borderRadius="full" px={3}>
                   {sortedGrowth.length} registros
                 </Badge>
               </Flex>
             </CardHeader>
             <CardBody>
-              <SimpleGrid columns={{ base: 1, md: 2, lg: 3, xl: 4 }} spacing={4}>
+              <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={4}>
                 {sortedGrowth.map((growth, idx) => {
                   const prevValue = idx > 0 ? sortedGrowth[idx - 1].totalPatrimony : growth.totalPatrimony;
                   const change = idx > 0 ? ((growth.totalPatrimony - prevValue) / prevValue) * 100 : 0;
@@ -386,7 +290,7 @@ export const GrowthPage = () => {
                                 px={2}
                               >
                                 <HStack spacing={1}>
-                                  {change >= 0 ? <FaArrowUp size={8} /> : <FaArrowDown size={8} />}
+                                  {change >= 0 ? <LuArrowUpRight size={8} /> : <LuArrowDownRight size={8} />}
                                   <Text>{Math.abs(change).toFixed(1)}%</Text>
                                 </HStack>
                               </Badge>
@@ -432,7 +336,6 @@ export const GrowthPage = () => {
             </CardBody>
           </Card>
         )}
-      </Container>
-    </Box>
+    </div>
   );
 };

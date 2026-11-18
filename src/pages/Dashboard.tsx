@@ -1,626 +1,292 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
-  Box, Container, Heading, SimpleGrid, Stat, StatLabel, StatNumber, StatHelpText,
-  Card, CardBody, CardHeader, Select, HStack, Text, VStack, useColorMode, Icon, Flex, Badge, Divider
-} from '@chakra-ui/react';
-import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
-import { Doughnut, Line } from 'react-chartjs-2';
-import { FaWallet, FaChartLine, FaBitcoin, FaHandHoldingUsd, FaArrowUp, FaArrowDown, FaUniversity } from 'react-icons/fa';
+  LuArrowDownLeft,
+  LuArrowUpRight,
+  LuBitcoin,
+  LuChartPie,
+  LuChartNoAxesCombined,
+  LuCoins,
+  LuLandmark,
+  LuPlus,
+  LuWallet,
+  LuHandCoins,
+} from 'react-icons/lu';
+import type { IconType } from 'react-icons';
 import { useFinance } from '../context/FinanceContext';
 import { useCurrencyRates } from '../hooks/useCurrencyRates';
 import { useAllCryptoPrices } from '../hooks/useAllCryptoPrices';
-import { lightColors, darkColors, getChartColors } from '../theme/colors';
+import { AllocationChart, HistoryChart } from '../components/FinanceCharts';
+import { CoinArtwork } from '../components/CoinArtwork';
+import { BankName } from '../components/BankName';
+import { PageHeader } from '../components/PageHeader';
 import type { Currency } from '../types/index.js';
 
-// Register Chart.js components
-ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
-
-interface StatCardProps {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  helpText: string;
-  iconColor: string;
-  bgGradient?: string;
+function Metric({
+  icon: Icon,
+  title,
+  amount,
+  detail,
+  tone,
+}: {
+  icon: IconType;
+  title: string;
+  amount: string;
+  detail: string;
+  tone: string;
+}) {
+  return (
+    <section className={'metric ' + tone}>
+      <div className="metric-title">
+        <span className="metric-icon">
+          <Icon size={19} />
+        </span>
+        <h2>{title}</h2>
+      </div>
+      <strong>{amount}</strong>
+      <small>{detail}</small>
+    </section>
+  );
 }
 
-const StatCard = ({ icon, label, value, helpText, iconColor, bgGradient }: StatCardProps) => {
-  const { colorMode } = useColorMode();
-  const colors = colorMode === 'dark' ? darkColors : lightColors;
-  
-  return (
-    <Card 
-      position="relative" 
-      overflow="hidden"
-      _before={bgGradient ? {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '4px',
-        background: bgGradient,
-      } : undefined}
-    >
-      <CardBody>
-        <Flex align="center" gap={4}>
-          <Flex
-            align="center"
-            justify="center"
-            w={14}
-            h={14}
-            borderRadius="xl"
-            bg={`${iconColor}15`}
-          >
-            <Icon as={icon} boxSize={7} color={iconColor} />
-          </Flex>
-          <Stat>
-            <StatLabel fontSize="sm" fontWeight="500" color={colors.textSecondary}>
-              {label}
-            </StatLabel>
-            <StatNumber fontSize="2xl" fontWeight="700" letterSpacing="-0.02em">
-              {value}
-            </StatNumber>
-            <StatHelpText fontSize="xs" mb={0}>
-              {helpText}
-            </StatHelpText>
-          </Stat>
-        </Flex>
-      </CardBody>
-    </Card>
-  );
-};
-
-export const Dashboard = () => {
+export function Dashboard({ onManage }: { onManage: () => void }) {
   const { data } = useFinance();
   const { usdToBrl } = useCurrencyRates();
   const { getTotalValue, getCryptoValue } = useAllCryptoPrices(data.cryptos);
   const [currency, setCurrency] = useState<Currency>('BRL');
-  const { colorMode } = useColorMode();
-  const colors = colorMode === 'dark' ? darkColors : lightColors;
-  const chartColors = getChartColors(colorMode === 'dark');
-
-  const convertValue = (value: number, fromUSD: boolean = false) => {
-    if (currency === 'USD') {
-      return parseFloat((fromUSD ? value : value / usdToBrl).toFixed(2));
-    }
-    return parseFloat((fromUSD ? value * usdToBrl : value).toFixed(2));
-  };
-
-  const formatCurrency = (value: number) => {
-    const symbol = currency === 'BRL' ? 'R$' : '$';
-    return `${symbol} ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
-  // Calculations
-  const totalBanks = data.banks.reduce((sum, bank) => sum + bank.balance, 0);
-  const totalInvestments = data.banks.reduce((sum, bank) => sum + bank.investments.reduce((s, i) => s + i.amount, 0), 0);
-  const totalCryptosUSD = getTotalValue();
-  const totalLoans = data.loans.reduce((sum, loan) => sum + loan.amount, 0);
-  const totalPatrimonyBRL = totalBanks + (totalCryptosUSD * usdToBrl) + totalLoans;
-  const totalPatrimony = currency === 'BRL' ? totalPatrimonyBRL : totalPatrimonyBRL / usdToBrl;
-
-  // Diversification data
-  const investments = data.banks.flatMap(b => b.investments);
-  const totalCryptosBRL = totalCryptosUSD * usdToBrl;
-  
-  const groupedInvestments = investments.reduce((acc, inv) => {
-    const type = inv.type || 'Outros';
-    acc[type] = (acc[type] || 0) + inv.amount;
+  const usd = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'USD' });
+  const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency });
+  const convert = (brl: number) => (currency === 'BRL' ? brl : brl / usdToBrl);
+  const format = (brl: number) => money.format(convert(brl));
+  const investments = data.banks.flatMap((b) => b.investments);
+  const banks = data.banks.reduce((sum, b) => sum + b.balance, 0);
+  const invested = investments.reduce((sum, i) => sum + i.amount, 0);
+  const cryptoUSD = getTotalValue();
+  const cryptoBRL = cryptoUSD * usdToBrl;
+  const loans = data.loans.reduce((sum, l) => sum + l.amount, 0);
+  const grouped = investments.reduce((acc, i) => {
+    const type = i.type || 'Outros';
+    acc.set(type, (acc.get(type) || 0) + i.amount);
     return acc;
-  }, {} as Record<string, number>);
-
-  const pieData = useMemo(() => {
-    const entries = [
-      ...Object.entries(groupedInvestments),
-      ...(totalCryptosBRL > 0 ? [['Criptomoedas', totalCryptosBRL] as [string, number]] : [])
-    ];
-    
-    return {
-      labels: entries.map(([name]) => name),
-      datasets: [{
-        data: entries.map(([, value]) => value),
-        backgroundColor: chartColors.slice(0, entries.length),
-        borderColor: colors.bgCard,
-        borderWidth: 3,
-        hoverBorderWidth: 0,
-        hoverOffset: 8,
-      }],
-    };
-  }, [groupedInvestments, totalCryptosBRL, chartColors, colors.bgCard]);
-
-  const totalDiversification = Object.values(groupedInvestments).reduce((a, b) => a + b, 0) + totalCryptosBRL;
-
-  // Growth data
-  const growthData = useMemo(() => {
-    const monthlyData = data.monthlyGrowth.map(g => ({
-      month: g.month,
-      value: convertValue(g.totalPatrimony)
-    }));
-
-    return {
-      labels: monthlyData.map(d => d.month),
-      datasets: [{
-        label: 'Patrimônio',
-        data: monthlyData.map(d => d.value),
-        fill: true,
-        backgroundColor: `${colors.primary}20`,
-        borderColor: colors.primary,
-        borderWidth: 3,
-        pointBackgroundColor: colors.primary,
-        pointBorderColor: colors.bgCard,
-        pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 8,
-        tension: 0.4,
-      }],
-    };
-  }, [data.monthlyGrowth, currency, colors]);
-
-  // Growth stats
-  const growthStats = useMemo(() => {
-    if (data.monthlyGrowth.length < 2) return null;
-    
-    const sorted = [...data.monthlyGrowth].sort((a, b) => {
-      const [monthA, yearA] = a.month.split('/');
-      const [monthB, yearB] = b.month.split('/');
-      return new Date(parseInt(yearA), parseInt(monthA) - 1).getTime() - 
-             new Date(parseInt(yearB), parseInt(monthB) - 1).getTime();
-    });
-    
-    const lastValue = sorted[sorted.length - 1].totalPatrimony;
-    const prevValue = sorted[sorted.length - 2].totalPatrimony;
-    const change = ((lastValue - prevValue) / prevValue) * 100;
-    
-    const changes = sorted.slice(1).map((g, i) => 
-      ((g.totalPatrimony - sorted[i].totalPatrimony) / sorted[i].totalPatrimony) * 100
+  }, new Map<string, number>());
+  const allocation = Array.from(grouped, ([name, value]) => ({ name, value }));
+  if (cryptoBRL > 0) allocation.push({ name: 'Criptomoedas', value: cryptoBRL });
+  const cryptoGroups = new Map<string, number>();
+  for (const item of data.cryptos) {
+    cryptoGroups.set(
+      item.symbol,
+      Number(
+        ((cryptoGroups.get(item.symbol) || 0) + getCryptoValue(item.symbol, item.amount)).toFixed(
+          2,
+        ),
+      ),
     );
-    const avgChange = changes.reduce((a, b) => a + b, 0) / changes.length;
-    
-    return { change, avgChange, lastValue };
-  }, [data.monthlyGrowth]);
-
-  // Crypto distribution pie chart data
-  // Cores fixas para criptomoedas baseadas nas logos
-  const cryptoColors: Record<string, string> = {
-    BTC: '#F7931A',  // Laranja Bitcoin
-    USDT: '#26A17B', // Verde Tether
-    ETH: '#627EEA',  // Roxo/Azul Ethereum
+  }
+  const cryptoColors: Record<string, string> = { BTC: '#de9a46', ETH: '#8698ce', USDT: '#499579' };
+  const cryptoAllocation = Array.from(cryptoGroups, ([name, value]) => ({
+    name,
+    value,
+    color: cryptoColors[name.toUpperCase()],
+  }));
+  const cryptoTotal = cryptoAllocation.reduce((sum, c) => sum + c.value, 0);
+  const monthKey = (m: string) => {
+    const [month, year] = m.split('/').map(Number);
+    return year * 12 + month;
   };
-
-  const cryptoPieData = useMemo(() => {
-    // Agrupa criptomoedas pelo símbolo
-    const grouped = data.cryptos.reduce((acc, crypto) => {
-      const value = getCryptoValue(crypto.symbol, crypto.amount);
-      acc[crypto.symbol] = parseFloat(((acc[crypto.symbol] || 0) + value).toFixed(2));
-      return acc;
-    }, {} as Record<string, number>);
-    
-    const entries = Object.entries(grouped);
-    const total = parseFloat(entries.reduce((sum, [, value]) => sum + value, 0).toFixed(2));
-    
-    // Aplica cores fixas para moedas conhecidas, ou usa chartColors para outras
-    let fallbackIndex = 0;
-    const backgroundColors = entries.map(([symbol]) => {
-      if (cryptoColors[symbol.toUpperCase()]) {
-        return cryptoColors[symbol.toUpperCase()];
-      }
-      return chartColors[fallbackIndex++ % chartColors.length];
-    });
-    
-    return {
-      labels: entries.map(([symbol]) => symbol),
-      datasets: [{
-        data: entries.map(([, value]) => parseFloat(value.toFixed(2))),
-        backgroundColor: backgroundColors,
-        borderColor: colors.bgCard,
-        borderWidth: 3,
-        hoverBorderWidth: 0,
-        hoverOffset: 8,
-      }],
-      total,
-    };
-  }, [data.cryptos, getCryptoValue, chartColors, colors.bgCard]);
-
-  const cryptoPieOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '70%',
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-        labels: {
-          color: colors.text,
-          padding: 16,
-          usePointStyle: true,
-          pointStyle: 'circle',
-          font: { size: 12, weight: 500 as const },
-        },
-      },
-      tooltip: {
-        backgroundColor: colors.bgCard,
-        titleColor: colors.text,
-        bodyColor: colors.textSecondary,
-        borderColor: colors.border,
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        callbacks: {
-          label: (context: any) => {
-            const value = context.raw;
-            const percentage = cryptoPieData.total > 0 
-              ? ((value / cryptoPieData.total) * 100).toFixed(1) 
-              : '0.0';
-            return `$${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percentage}%)`;
-          },
-        },
-      },
-    },
-  };
-
-  const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '70%',
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-        labels: {
-          color: colors.text,
-          padding: 16,
-          usePointStyle: true,
-          pointStyle: 'circle',
-          font: { size: 12, weight: 500 as const },
-        },
-      },
-      tooltip: {
-        backgroundColor: colors.bgCard,
-        titleColor: colors.text,
-        bodyColor: colors.textSecondary,
-        borderColor: colors.border,
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        callbacks: {
-          label: (context: any) => {
-            const value = context.raw;
-            const percentage = ((value / totalDiversification) * 100).toFixed(1);
-            return `${formatCurrency(convertValue(value))} (${percentage}%)`;
-          },
-        },
-      },
-    },
-  };
-
-  const lineOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: colors.bgCard,
-        titleColor: colors.text,
-        bodyColor: colors.textSecondary,
-        borderColor: colors.border,
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        callbacks: {
-          label: (context: any) => formatCurrency(context.raw),
-        },
-      },
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: { color: colors.textMuted, font: { size: 11 } },
-      },
-      y: {
-        grid: { color: colors.border, drawBorder: false },
-        ticks: { 
-          color: colors.textMuted, 
-          font: { size: 11 },
-          callback: (value: any) => formatCurrency(value),
-        },
-      },
-    },
-    interaction: {
-      intersect: false,
-      mode: 'index' as const,
-    },
-  };
-
+  const history = [...data.monthlyGrowth].sort((a, b) => monthKey(a.month) - monthKey(b.month));
+  const changes = history
+    .slice(1)
+    .map(
+      (r, i) => ((r.totalPatrimony - history[i].totalPatrimony) / history[i].totalPatrimony) * 100,
+    );
+  const percent = (value: number) =>
+    value.toLocaleString('pt-BR', { maximumFractionDigits: 2, signDisplay: 'exceptZero' }) + '%';
   return (
-    <Box minH="100vh" bg={colors.bg} pb={10}>
-      <Container maxW="1400px" py={8} px={{ base: 4, md: 8 }}>
-        {/* Header */}
-        <Flex justify="space-between" align="center" mb={8} flexWrap="wrap" gap={4}>
-          <Box>
-            <Heading size="xl" fontWeight="800" letterSpacing="-0.03em">
-              Dashboard
-            </Heading>
-            <Text color={colors.textSecondary} mt={1}>
-              Visão geral do seu patrimônio
-            </Text>
-          </Box>
-          <Select 
-            w="140px" 
-            value={currency} 
-            onChange={(e) => setCurrency(e.target.value as Currency)}
-            bg={colors.bgCard}
-            borderColor={colors.border}
-            fontWeight="600"
-            size="md"
-          >
-            <option value="BRL">BRL (R$)</option>
-            <option value="USD">USD ($)</option>
-          </Select>
-        </Flex>
-
-        {/* Stats Cards */}
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={5} mb={8}>
-          <StatCard
-            icon={FaWallet}
-            label="Patrimônio Total"
-            value={formatCurrency(totalPatrimony)}
-            helpText="Todos os ativos"
-            iconColor={colors.success}
-            bgGradient={colors.gradientSuccess}
+    <div className="page dashboard">
+      <PageHeader
+        title="Visão geral"
+        description="Acompanhe seu patrimônio e a composição da sua carteira."
+      >
+        <div className="currency-control" role="group" aria-label="Moeda de exibição">
+          {(['BRL', 'USD'] as const).map((c) => (
+            <button key={c} aria-pressed={currency === c} onClick={() => setCurrency(c)}>
+              {c}
+            </button>
+          ))}
+        </div>
+      </PageHeader>
+      <section className="balance-card">
+        <div className="balance-copy">
+          <h2>
+            <LuWallet size={17} /> Patrimônio total
+          </h2>
+          <strong>{format(banks + cryptoBRL + loans)}</strong>
+          <p>Saldo em bancos, criptomoedas e empréstimos.</p>
+        </div>
+        <CoinArtwork />
+      </section>
+      <div className="metrics">
+        <Metric
+          icon={LuChartNoAxesCombined}
+          title="Investimentos"
+          amount={format(invested)}
+          detail={
+            investments.length +
+            (investments.length === 1 ? ' ativo cadastrado' : ' ativos cadastrados')
+          }
+          tone="sage"
+        />
+        <Metric
+          icon={LuBitcoin}
+          title="Criptomoedas"
+          amount={currency === 'USD' ? usd.format(cryptoUSD) : format(cryptoBRL)}
+          detail={
+            data.cryptos.length +
+            (data.cryptos.length === 1 ? ' posição na carteira' : ' posições na carteira')
+          }
+          tone="sand"
+        />
+        <Metric
+          icon={LuHandCoins}
+          title="Empréstimos"
+          amount={format(loans)}
+          detail={
+            data.loans.length +
+            (data.loans.length === 1 ? ' empréstimo concedido' : ' empréstimos concedidos')
+          }
+          tone="lilac"
+        />
+      </div>
+      <div className="overview-grid">
+        <section className="panel">
+          <header className="panel-heading">
+            <h2>
+              <LuLandmark />
+              Bancos
+            </h2>
+            <span className="count">{data.banks.length}</span>
+          </header>
+          {data.banks.length === 0 ? (
+            <div className="empty-state">
+              <span className="empty-icon">
+                <LuLandmark />
+              </span>
+              <strong>Nenhum banco cadastrado</strong>
+              <button className="text-action" onClick={onManage}>
+                <LuPlus size={15} /> Adicionar banco
+              </button>
+            </div>
+          ) : (
+            <div className="record-list">
+              {data.banks.map((b) => (
+                <article key={b.id}>
+                  <div className="record-line">
+                    <strong><BankName name={b.name} /></strong>
+                    <b>{format(b.balance)}</b>
+                  </div>
+                  {b.investments.map((i) => (
+                    <div className="investment-line" key={i.id}>
+                      <span>
+                        {i.name} <small>{i.type}</small>
+                      </span>
+                      <span>{format(i.amount)}</span>
+                    </div>
+                  ))}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+        <section className="panel allocation-panel">
+          <header className="panel-heading">
+            <h2>
+              <LuChartPie />
+              Diversificação
+            </h2>
+          </header>
+          <AllocationChart
+            items={allocation}
+            total={invested + cryptoBRL}
+            format={format}
+            emptyText="Cadastre investimentos para ver a distribuição."
           />
-          <StatCard
-            icon={FaChartLine}
-            label="Investimentos"
-            value={formatCurrency(convertValue(totalInvestments))}
-            helpText={`${investments.length} ativos`}
-            iconColor={colors.primary}
-            bgGradient={colors.gradientPrimary}
+        </section>
+      </div>
+      {history.length > 0 && (
+        <section className="panel history-panel">
+          <header className="panel-heading">
+            <h2>
+              <LuChartNoAxesCombined />
+              Crescimento mensal
+            </h2>
+          </header>
+          {changes.length > 0 && (
+            <div className="growth-details">
+              <span>
+                Variação <b>{percent(changes[changes.length - 1])}</b>
+              </span>
+              <span>
+                Média <b>{percent(changes.reduce((a, b) => a + b, 0) / changes.length)}</b>
+              </span>
+            </div>
+          )}
+          <HistoryChart
+            months={history.map((r) => r.month)}
+            values={history.map((r) => Number(convert(r.totalPatrimony).toFixed(2)))}
+            currency={currency}
           />
-          <StatCard
-            icon={FaBitcoin}
-            label="Criptomoedas"
-            value={formatCurrency(convertValue(totalCryptosUSD, true))}
-            helpText={`${data.cryptos.length} moeda(s)`}
-            iconColor={colors.warning}
-            bgGradient={colors.gradientWarning}
-          />
-          <StatCard
-            icon={FaHandHoldingUsd}
-            label="Empréstimos"
-            value={formatCurrency(convertValue(totalLoans))}
-            helpText={`${data.loans.length} empréstimo(s)`}
-            iconColor={colors.accent}
-            bgGradient={colors.gradientAccent}
-          />
-        </SimpleGrid>
-
-        {/* Charts Section */}
-        <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} mb={8}>
-          {/* Banks Card */}
-          <Card>
-            <CardHeader pb={2}>
-              <Flex align="center" gap={3}>
-                <Icon as={FaUniversity} color={colors.primary} />
-                <Heading size="md" fontWeight="700">Bancos</Heading>
-                <Badge colorScheme="purple" borderRadius="full" px={2}>
-                  {data.banks.length}
-                </Badge>
-              </Flex>
-            </CardHeader>
-            <CardBody pt={2}>
-              <VStack align="stretch" spacing={3} maxH="400px" overflowY="auto" pr={2}>
-                {data.banks.length === 0 ? (
-                  <Text color={colors.textMuted} textAlign="center" py={8}>
-                    Nenhum banco cadastrado
-                  </Text>
-                ) : (
-                  data.banks.map(bank => (
-                    <Box 
-                      key={bank.id} 
-                      p={4} 
-                      borderRadius="lg"
-                      bg={colors.bgInput}
-                      transition="all 0.2s"
-                      _hover={{ bg: colors.bgCardHover }}
-                    >
-                      <Flex justify="space-between" align="center" mb={bank.investments.length > 0 ? 3 : 0}>
-                        <Text fontWeight="600">{bank.name}</Text>
-                        <Text fontWeight="700" color={colors.success}>
-                          {formatCurrency(convertValue(bank.balance))}
-                        </Text>
-                      </Flex>
-                      {bank.investments.length > 0 && (
-                        <VStack align="stretch" spacing={2} pl={3} borderLeftWidth={2} borderColor={colors.primary}>
-                          {bank.investments.map(inv => (
-                            <Flex key={inv.id} justify="space-between" fontSize="sm">
-                              <HStack spacing={2}>
-                                <Text color={colors.textSecondary}>{inv.name}</Text>
-                                <Badge size="sm" colorScheme="gray" borderRadius="md">
-                                  {inv.type}
-                                </Badge>
-                              </HStack>
-                              <Text fontWeight="500">
-                                {formatCurrency(convertValue(inv.amount))}
-                              </Text>
-                            </Flex>
-                          ))}
-                        </VStack>
-                      )}
-                    </Box>
-                  ))
-                )}
-              </VStack>
-            </CardBody>
-          </Card>
-
-          {/* Diversification Chart */}
-          <Card>
-            <CardHeader pb={2}>
-              <Heading size="md" fontWeight="700">Diversificação</Heading>
-            </CardHeader>
-            <CardBody>
-              {pieData.labels.length > 0 ? (
-                <Box h="350px" position="relative">
-                  <Doughnut data={pieData} options={doughnutOptions} />
-                  <VStack
-                    position="absolute"
-                    top="50%"
-                    left="50%"
-                    transform="translate(-50%, -70%)"
-                    spacing={0}
-                  >
-                    <Text fontSize="sm" color={colors.textMuted}>Total</Text>
-                    <Text fontSize="xl" fontWeight="700">
-                      {formatCurrency(convertValue(totalDiversification))}
-                    </Text>
-                  </VStack>
-                </Box>
-              ) : (
-                <Flex h="350px" align="center" justify="center">
-                  <Text color={colors.textMuted}>Adicione investimentos para ver a diversificação</Text>
-                </Flex>
-              )}
-            </CardBody>
-          </Card>
-        </SimpleGrid>
-
-        {/* Growth Chart */}
-        {data.monthlyGrowth.length > 0 && (
-          <Card mb={8}>
-            <CardHeader>
-              <Flex justify="space-between" align="center" flexWrap="wrap" gap={4}>
-                <Heading size="md" fontWeight="700">Crescimento Mensal</Heading>
-                {growthStats && (
-                  <HStack spacing={6}>
-                    <VStack spacing={0} align="end">
-                      <Text fontSize="xs" color={colors.textMuted}>Variação</Text>
-                      <HStack spacing={1}>
-                        <Icon 
-                          as={growthStats.change >= 0 ? FaArrowUp : FaArrowDown} 
-                          color={growthStats.change >= 0 ? colors.success : colors.danger}
-                          boxSize={3}
-                        />
-                        <Text 
-                          fontWeight="700" 
-                          color={growthStats.change >= 0 ? colors.success : colors.danger}
-                        >
-                          {growthStats.change >= 0 ? '+' : ''}{growthStats.change.toFixed(2)}%
-                        </Text>
-                      </HStack>
-                    </VStack>
-                    <Divider orientation="vertical" h={8} />
-                    <VStack spacing={0} align="end">
-                      <Text fontSize="xs" color={colors.textMuted}>Média</Text>
-                      <Text fontWeight="700" color={growthStats.avgChange >= 0 ? colors.success : colors.danger}>
-                        {growthStats.avgChange >= 0 ? '+' : ''}{growthStats.avgChange.toFixed(2)}%
-                      </Text>
-                    </VStack>
-                  </HStack>
-                )}
-              </Flex>
-            </CardHeader>
-            <CardBody>
-              <Box h="300px">
-                <Line data={growthData} options={lineOptions} />
-              </Box>
-            </CardBody>
-          </Card>
-        )}
-
-        {/* Crypto Wallet */}
-        {data.cryptos.length > 0 && (
-          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
-            {/* Crypto List */}
-            <Card>
-              <CardHeader>
-                <Flex align="center" gap={3}>
-                  <Icon as={FaBitcoin} color={colors.warning} />
-                  <Heading size="md" fontWeight="700">Carteira de Criptomoedas</Heading>
-                  <Badge colorScheme="orange" borderRadius="full" px={2}>
-                    {data.cryptos.length}
-                  </Badge>
-                </Flex>
-              </CardHeader>
-              <CardBody>
-                <VStack align="stretch" spacing={3} maxH="400px" overflowY="auto" pr={2}>
-                  {data.cryptos.map(crypto => {
-                    const currentValue = parseFloat(getCryptoValue(crypto.symbol, crypto.amount).toFixed(2));
-                    const investedValue = parseFloat((crypto.purchasePrice * crypto.amount).toFixed(2));
-                    const profit = parseFloat((currentValue - investedValue).toFixed(2));
-                    const profitPercentage = investedValue > 0 ? parseFloat(((profit / investedValue) * 100).toFixed(2)) : 0;
-                    
-                    return (
-                      <Box 
-                        key={crypto.id} 
-                        p={4} 
-                        borderRadius="lg"
-                        bg={colors.bgInput}
-                        borderWidth={1}
-                        borderColor={colors.border}
-                      >
-                        <Flex justify="space-between" align="start">
-                          <VStack align="start" spacing={1}>
-                            <HStack>
-                              <Text fontWeight="700" fontSize="lg">{crypto.symbol}</Text>
-                              <Badge 
-                                colorScheme={profitPercentage >= 0 ? 'green' : 'red'} 
-                                borderRadius="full"
-                                px={2}
-                              >
-                                <HStack spacing={1}>
-                                  <Icon 
-                                    as={profitPercentage >= 0 ? FaArrowUp : FaArrowDown} 
-                                    boxSize={2} 
-                                  />
-                                  <Text>{Math.abs(profitPercentage).toFixed(2)}%</Text>
-                                </HStack>
-                              </Badge>
-                            </HStack>
-                            <Text fontSize="sm" color={colors.textMuted}>
-                              {crypto.amount} unidade(s)
-                            </Text>
-                          </VStack>
-                          <VStack align="end" spacing={1}>
-                            <Text fontWeight="700" color={colors.warning}>
-                              ${currentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </Text>
-                            <Text fontSize="xs" color={colors.textMuted}>
-                              Compra: ${crypto.purchasePrice.toFixed(2)}/un
-                            </Text>
-                          </VStack>
-                        </Flex>
-                      </Box>
-                    );
-                  })}
-                </VStack>
-              </CardBody>
-            </Card>
-
-            {/* Crypto Distribution Pie Chart */}
-            <Card>
-              <CardHeader pb={2}>
-                <Heading size="md" fontWeight="700">Distribuição de Criptomoedas</Heading>
-              </CardHeader>
-              <CardBody>
-                <Box h="350px" position="relative">
-                  <Doughnut data={cryptoPieData} options={cryptoPieOptions} />
-                  <VStack
-                    position="absolute"
-                    top="50%"
-                    left="50%"
-                    transform="translate(-50%, -70%)"
-                    spacing={0}
-                  >
-                    <Text fontSize="sm" color={colors.textMuted}>Total</Text>
-                    <Text fontSize="xl" fontWeight="700" color={colors.warning}>
-                      ${cryptoPieData.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </Text>
-                  </VStack>
-                </Box>
-              </CardBody>
-            </Card>
-          </SimpleGrid>
-        )}
-      </Container>
-    </Box>
+        </section>
+      )}
+      {data.cryptos.length > 0 && (
+        <div className="overview-grid">
+          <section className="panel">
+            <header className="panel-heading">
+              <h2>
+                <LuCoins />
+                Carteira de criptomoedas
+              </h2>
+              <span className="count">{data.cryptos.length}</span>
+            </header>
+            <div className="record-list" role="region" aria-label="Posições em criptomoedas" tabIndex={0}>
+              {data.cryptos.map((c) => {
+                const value = Number(getCryptoValue(c.symbol, c.amount).toFixed(2));
+                const cost = Number((c.purchasePrice * c.amount).toFixed(2));
+                const profit = Number((value - cost).toFixed(2));
+                const variation = cost > 0 ? (profit / cost) * 100 : 0;
+                return (
+                  <article key={c.id}>
+                    <div className="record-line">
+                      <strong>{c.symbol}</strong>
+                      <b>{usd.format(value)}</b>
+                    </div>
+                    <div className="investment-line">
+                      <span>{c.amount} unidade(s)</span>
+                      <span>Compra {usd.format(c.purchasePrice)}/un</span>
+                    </div>
+                    <span className={variation >= 0 ? 'gain' : 'loss'}>
+                      {variation >= 0 ? <LuArrowUpRight /> : <LuArrowDownLeft />}
+                      {percent(variation)}
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+          <section className="panel allocation-panel">
+            <header className="panel-heading">
+              <h2>
+                <LuChartPie />
+                Distribuição de criptomoedas
+              </h2>
+            </header>
+            <AllocationChart
+              items={cryptoAllocation}
+              total={cryptoTotal}
+              format={usd.format}
+              emptyText="Nenhuma posição na carteira."
+            />
+          </section>
+        </div>
+      )}
+    </div>
   );
-};
+}

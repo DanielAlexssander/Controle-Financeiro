@@ -1,238 +1,84 @@
 import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
-import { lightColors, darkColors } from './colors';
+import { darkColors, lightColors } from './colors';
 
-const config: ThemeConfig = {
-  initialColorMode: 'dark',
-  useSystemColorMode: false,
-};
+const config: ThemeConfig = { initialColorMode: 'light', useSystemColorMode: false };
+type Mode = { colorMode: 'light' | 'dark' };
+const palette = ({ colorMode }: Mode) => (colorMode === 'dark' ? darkColors : lightColors);
+const sans = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
-const theme = extendTheme({
+export default extendTheme({
   config,
-  fonts: {
-    heading: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    body: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  },
+  fonts: { body: sans, heading: 'var(--heading)' },
   colors: {
     brand: {
-      50: '#eef2ff',
-      100: '#e0e7ff',
-      200: '#c7d2fe',
-      300: '#a5b4fc',
-      400: '#818cf8',
-      500: '#6366f1',
-      600: '#4f46e5',
-      700: '#4338ca',
-      800: '#3730a3',
-      900: '#312e81',
-    },
-    accent: {
-      50: '#ecfeff',
-      100: '#cffafe',
-      200: '#a5f3fc',
-      300: '#67e8f9',
-      400: '#22d3ee',
-      500: '#06b6d4',
-      600: '#0891b2',
-      700: '#0e7490',
-      800: '#155e75',
-      900: '#164e63',
+      50: '#eef6ee',
+      100: '#dcebdd',
+      200: '#bddac6',
+      300: '#9bc7aa',
+      400: '#73ac8c',
+      500: '#326b55',
+      600: '#245540',
+      700: '#1a4637',
+      800: '#15392e',
+      900: '#102d24',
     },
   },
   styles: {
-    global: (props: { colorMode: 'light' | 'dark' }) => ({
-      'html, body': {
-        bg: props.colorMode === 'dark' ? darkColors.bg : lightColors.bg,
-        color: props.colorMode === 'dark' ? darkColors.text : lightColors.text,
-        scrollBehavior: 'smooth',
-      },
-      '::-webkit-scrollbar': {
-        width: '8px',
-        height: '8px',
-      },
-      '::-webkit-scrollbar-track': {
-        bg: props.colorMode === 'dark' ? darkColors.bgCard : lightColors.bgCard,
-      },
-      '::-webkit-scrollbar-thumb': {
-        bg: props.colorMode === 'dark' ? darkColors.border : lightColors.border,
-        borderRadius: 'full',
-      },
-      '::-webkit-scrollbar-thumb:hover': {
-        bg: props.colorMode === 'dark' ? darkColors.borderLight : lightColors.textMuted,
-      },
-    }),
-  },
-  components: {
-    Card: {
-      baseStyle: (props: { colorMode: 'light' | 'dark' }) => ({
-        container: {
-          bg: props.colorMode === 'dark' ? darkColors.bgCard : lightColors.bgCard,
-          borderRadius: 'xl',
-          borderWidth: '1px',
-          borderColor: props.colorMode === 'dark' ? darkColors.border : lightColors.border,
-          boxShadow: props.colorMode === 'dark' ? darkColors.shadow : lightColors.shadow,
-          transition: 'all 0.2s ease-in-out',
-          _hover: {
-            transform: 'translateY(-2px)',
-            boxShadow: props.colorMode === 'dark' ? darkColors.shadowLg : lightColors.shadowLg,
-          },
+    global: (mode: Mode) => {
+      const c = palette(mode);
+      return {
+        body: {
+          bg: c.bg,
+          color: c.text,
+          '--surface': c.bgCard,
+          '--canvas': c.bg,
+          '--quiet': c.bgInput,
+          '--hover': c.bgCardHover,
+          '--ink': c.text,
+          '--muted': c.textMuted,
+          '--accent': c.primary,
+          '--line': c.border,
         },
-      }),
+      };
+    },
+  },
+  shadows: { outline: '0 0 0 3px rgba(100,165,127,.45)' },
+  components: {
+    Heading: { baseStyle: { fontWeight: 650, letterSpacing: '-.035em' } },
+    Card: {
+      variants: {
+        elevated: (mode: Mode) => ({
+          container: {
+            bg: palette(mode).bgCard,
+            color: palette(mode).text,
+            minW: 0,
+            border: '1px solid',
+            borderColor: palette(mode).border,
+            borderRadius: '16px',
+            boxShadow: '0 2px 5px rgba(23,49,33,.025)',
+          },
+        }),
+      },
     },
     Button: {
-      baseStyle: {
-        fontWeight: '600',
-        borderRadius: 'lg',
-        transition: 'all 0.2s ease-in-out',
-      },
-      variants: {
-        solid: (props: { colorScheme: string; colorMode: 'light' | 'dark' }) => ({
-          bg: props.colorScheme === 'brand' 
-            ? (props.colorMode === 'dark' ? 'brand.500' : 'brand.500')
-            : undefined,
-          _hover: {
-            transform: 'translateY(-1px)',
-            boxShadow: 'md',
-          },
-          _active: {
-            transform: 'translateY(0)',
-          },
-        }),
-        ghost: {
-          _hover: {
-            bg: 'whiteAlpha.100',
-          },
-        },
-        glass: (props: { colorMode: 'light' | 'dark' }) => ({
-          bg: props.colorMode === 'dark' ? darkColors.bgGlass : lightColors.bgGlass,
-          backdropFilter: 'blur(10px)',
-          borderWidth: '1px',
-          borderColor: props.colorMode === 'dark' ? darkColors.border : lightColors.border,
-          _hover: {
-            bg: props.colorMode === 'dark' ? darkColors.bgCardHover : lightColors.bgCardHover,
-          },
-        }),
-      },
-      defaultProps: {
-        colorScheme: 'brand',
-      },
+      baseStyle: { borderRadius: '9px', fontWeight: 600 },
+      defaultProps: { colorScheme: 'brand' },
     },
-    Input: {
-      baseStyle: (props: { colorMode: 'light' | 'dark' }) => ({
-        field: {
-          borderRadius: 'lg',
-          bg: props.colorMode === 'dark' ? darkColors.bgInput : lightColors.bgInput,
-          borderColor: props.colorMode === 'dark' ? darkColors.border : lightColors.border,
-          _focus: {
-            borderColor: 'brand.500',
-            boxShadow: '0 0 0 1px var(--chakra-colors-brand-500)',
-          },
-        },
-      }),
-    },
-    Select: {
-      baseStyle: (props: { colorMode: 'light' | 'dark' }) => ({
-        field: {
-          borderRadius: 'lg',
-          bg: props.colorMode === 'dark' ? darkColors.bgInput : lightColors.bgInput,
-        },
-      }),
-    },
+    Input: { defaultProps: { focusBorderColor: 'brand.400' } },
+    Select: { defaultProps: { focusBorderColor: 'brand.400' } },
+    NumberInput: { defaultProps: { focusBorderColor: 'brand.400' } },
     Tabs: {
       variants: {
-        'soft-rounded': (props: { colorMode: 'light' | 'dark' }) => ({
+        'soft-rounded': (mode: Mode) => ({
+          tablist: { gap: 1, borderBottom: '1px solid', borderColor: palette(mode).border, pb: 2 },
           tab: {
-            fontWeight: '600',
-            borderRadius: 'lg',
-            _selected: {
-              bg: 'brand.500',
-              color: 'white',
-            },
-          },
-          tablist: {
-            bg: props.colorMode === 'dark' ? darkColors.bgCard : lightColors.bgInput,
-            borderRadius: 'xl',
-            p: 1,
+            color: palette(mode).textSecondary,
+            borderRadius: '8px',
+            fontSize: 'sm',
+            _selected: { bg: palette(mode).bgCardHover, color: palette(mode).primary },
           },
         }),
       },
-      defaultProps: {
-        variant: 'soft-rounded',
-      },
     },
-    Heading: {
-      baseStyle: {
-        fontWeight: '700',
-        letterSpacing: '-0.02em',
-      },
-    },
-    Stat: {
-      baseStyle: (props: { colorMode: 'light' | 'dark' }) => ({
-        label: {
-          color: props.colorMode === 'dark' ? darkColors.textSecondary : lightColors.textSecondary,
-          fontWeight: '500',
-          fontSize: 'sm',
-        },
-        number: {
-          fontWeight: '700',
-          fontSize: '2xl',
-        },
-        helpText: {
-          color: props.colorMode === 'dark' ? darkColors.textMuted : lightColors.textMuted,
-          fontSize: 'xs',
-        },
-      }),
-    },
-    Menu: {
-      baseStyle: (props: { colorMode: 'light' | 'dark' }) => ({
-        list: {
-          bg: props.colorMode === 'dark' ? darkColors.bgCard : lightColors.bgCard,
-          borderColor: props.colorMode === 'dark' ? darkColors.border : lightColors.border,
-          borderRadius: 'xl',
-          boxShadow: props.colorMode === 'dark' ? darkColors.shadowLg : lightColors.shadowLg,
-          p: 2,
-        },
-        item: {
-          borderRadius: 'lg',
-          _hover: {
-            bg: props.colorMode === 'dark' ? darkColors.bgCardHover : lightColors.bgCardHover,
-          },
-          _focus: {
-            bg: props.colorMode === 'dark' ? darkColors.bgCardHover : lightColors.bgCardHover,
-          },
-        },
-      }),
-    },
-    Modal: {
-      baseStyle: (props: { colorMode: 'light' | 'dark' }) => ({
-        dialog: {
-          bg: props.colorMode === 'dark' ? darkColors.bgCard : lightColors.bgCard,
-          borderRadius: '2xl',
-        },
-      }),
-    },
-    Tooltip: {
-      baseStyle: (props: { colorMode: 'light' | 'dark' }) => ({
-        bg: props.colorMode === 'dark' ? darkColors.bgCard : lightColors.text,
-        color: props.colorMode === 'dark' ? darkColors.text : lightColors.bgCard,
-        borderRadius: 'lg',
-        px: 3,
-        py: 2,
-        fontSize: 'sm',
-        fontWeight: '500',
-      }),
-    },
-  },
-  shadows: {
-    outline: '0 0 0 3px rgba(99, 102, 241, 0.4)',
-  },
-  radii: {
-    sm: '6px',
-    md: '8px',
-    lg: '12px',
-    xl: '16px',
-    '2xl': '20px',
-    '3xl': '24px',
   },
 });
-
-export default theme;

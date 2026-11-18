@@ -12,10 +12,13 @@ import theme from './theme/theme';
 function App({ abrirChatAoIniciar = false }: { abrirChatAoIniciar?: boolean }) {
   const [currentPage, setCurrentPage] = useState('dashboard');
 
+  const navigate = (page: string) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
   const renderPage = () => {
     switch (currentPage) {
-      case 'dashboard':
-        return <Dashboard />;
       case 'manage':
         return <ManagePage />;
       case 'growth':
@@ -23,7 +26,7 @@ function App({ abrirChatAoIniciar = false }: { abrirChatAoIniciar?: boolean }) {
       case 'config':
         return <ConfigPage />;
       default:
-        return <Dashboard />;
+        return <Dashboard onManage={() => navigate('manage')} />;
     }
   };
 
@@ -31,8 +34,8 @@ function App({ abrirChatAoIniciar = false }: { abrirChatAoIniciar?: boolean }) {
     <ChakraProvider theme={theme}>
       <ColorModeScript initialColorMode={theme.config.initialColorMode} />
       <FinanceProvider>
-        <Navbar currentPage={currentPage} onNavigate={setCurrentPage} />
-        {renderPage()}
+        <Navbar currentPage={currentPage} onNavigate={navigate} />
+        <main className="workspace" key={currentPage}>{renderPage()}</main>
         <AiChat abrirAoIniciar={abrirChatAoIniciar} />
       </FinanceProvider>
     </ChakraProvider>

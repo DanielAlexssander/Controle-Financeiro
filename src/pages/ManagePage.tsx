@@ -1,12 +1,15 @@
+import { PageHeader } from '../components/PageHeader';
+import { BankName } from '../components/BankName';
+import { getBankLogo } from '../services/bankLogo';
 import { useState } from 'react';
 import {
-  Box, Container, Heading, Tabs, TabList, TabPanels, Tab, TabPanel,
+  Box, Heading, Tabs, TabList, TabPanels, Tab, TabPanel,
   Button, FormControl, FormLabel, Input, VStack, HStack, Card, CardBody, CardHeader,
   IconButton, useToast, NumberInput, NumberInputField, Select, useColorMode,
   Text, Badge, Flex, SimpleGrid, Divider, InputGroup, InputLeftElement
 } from '@chakra-ui/react';
 import { DeleteIcon, EditIcon, AddIcon, CloseIcon } from '@chakra-ui/icons';
-import { FaUniversity, FaBitcoin, FaHandHoldingUsd, FaPlus, FaSave, FaTimes } from 'react-icons/fa';
+import { LuLandmark, LuBitcoin, LuHandCoins, LuPlus, LuSave, LuX } from 'react-icons/lu';
 import { useFinance } from '../context/FinanceContext';
 import { lightColors, darkColors } from '../theme/colors';
 import type { Bank, Crypto, Loan, Investment } from '../types/index.js';
@@ -18,6 +21,7 @@ export const ManagePage = () => {
   const colors = colorMode === 'dark' ? darkColors : lightColors;
 
   const [bankForm, setBankForm] = useState<Bank>({ id: '', name: '', balance: 0, investments: [] });
+  const bankLogo = getBankLogo(bankForm.name);
   const [editingBank, setEditingBank] = useState<string | null>(null);
   const [investmentForm, setInvestmentForm] = useState<Investment>({ id: '', name: '', amount: 0, type: '' });
   const [editingInvestment, setEditingInvestment] = useState<number | null>(null);
@@ -158,16 +162,8 @@ export const ManagePage = () => {
   ];
 
   return (
-    <Box minH="100vh" bg={colors.bg} pb={10}>
-      <Container maxW="1200px" py={8} px={{ base: 4, md: 8 }}>
-        <Box mb={8}>
-          <Heading size="xl" fontWeight="800" letterSpacing="-0.03em">
-            Gerenciar Finanças
-          </Heading>
-          <Text color={colors.textSecondary} mt={1}>
-            Adicione e gerencie seus ativos
-          </Text>
-        </Box>
+    <div className="page">
+        <PageHeader title="Gerenciar ativos" description="Organize suas contas bancárias, criptomoedas e empréstimos." />
 
         <Tabs variant="soft-rounded" colorScheme="brand">
           <TabList 
@@ -177,25 +173,25 @@ export const ManagePage = () => {
             flexWrap={{ base: 'nowrap', md: 'wrap' }}
           >
             <Tab gap={2} minW="fit-content">
-              <FaUniversity /> Bancos
+              <LuLandmark /> Bancos
             </Tab>
             <Tab gap={2} minW="fit-content">
-              <FaBitcoin /> Criptomoedas
+              <LuBitcoin /> Criptomoedas
             </Tab>
             <Tab gap={2} minW="fit-content">
-              <FaHandHoldingUsd /> Empréstimos
+              <LuHandCoins /> Empréstimos
             </Tab>
           </TabList>
 
           <TabPanels>
             {/* Banks Tab */}
             <TabPanel p={0}>
-              <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
+              <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={5} alignItems="start">
                 {/* Form Card */}
                 <Card>
                   <CardHeader>
                     <Flex align="center" gap={2}>
-                      <FaPlus color={colors.primary} />
+                      <LuPlus color={colors.primary} />
                       <Heading size="md" fontWeight="700">
                         {editingBank ? 'Editar Banco' : 'Novo Banco'}
                       </Heading>
@@ -205,11 +201,18 @@ export const ManagePage = () => {
                     <VStack spacing={4}>
                       <FormControl>
                         <FormLabel fontSize="sm" fontWeight="600">Nome do Banco</FormLabel>
-                        <Input 
-                          placeholder="Ex: Nubank, Inter, Itaú..."
-                          value={bankForm.name} 
-                          onChange={(e) => setBankForm({ ...bankForm, name: e.target.value })} 
-                        />
+                        <InputGroup>
+                          {bankLogo && (
+                            <InputLeftElement pointerEvents="none">
+                              <img className="bank-input-icon" src={bankLogo} width="24" height="24" alt="" />
+                            </InputLeftElement>
+                          )}
+                          <Input
+                            placeholder="Ex: Nubank, Inter, Itaú..."
+                            value={bankForm.name}
+                            onChange={(e) => setBankForm({ ...bankForm, name: e.target.value })}
+                          />
+                        </InputGroup>
                       </FormControl>
                       
                       <FormControl>
@@ -227,7 +230,7 @@ export const ManagePage = () => {
                       <Box w="100%" p={4} borderRadius="lg" bg={colors.bgInput} borderWidth={1} borderColor={colors.border}>
                         <Flex justify="space-between" align="center" mb={3}>
                           <Text fontWeight="600" fontSize="sm">Investimentos</Text>
-                          <Badge colorScheme="purple" borderRadius="full">
+                          <Badge colorScheme="brand" borderRadius="full">
                             {bankForm.investments.length}
                           </Badge>
                         </Flex>
@@ -338,7 +341,7 @@ export const ManagePage = () => {
                             flex={1} 
                             variant="outline" 
                             colorScheme="red"
-                            leftIcon={<FaTimes />}
+                            leftIcon={<LuX />}
                             onClick={() => handleCancelEdit('bank')}
                           >
                             Cancelar
@@ -346,8 +349,8 @@ export const ManagePage = () => {
                         )}
                         <Button 
                           flex={1} 
-                          colorScheme="brand" 
-                          leftIcon={editingBank ? <FaSave /> : <FaPlus />}
+                          colorScheme="brand"
+                          leftIcon={editingBank ? <LuSave /> : <LuPlus />}
                           onClick={handleBankSubmit}
                         >
                           {editingBank ? 'Salvar' : 'Adicionar'}
@@ -362,9 +365,7 @@ export const ManagePage = () => {
                   {data.banks.length === 0 ? (
                     <Card>
                       <CardBody>
-                        <Text textAlign="center" color={colors.textMuted} py={8}>
-                          Nenhum banco cadastrado ainda
-                        </Text>
+                        <div className="empty-state"><span className="empty-icon"><LuLandmark /></span><strong>Nenhum banco cadastrado ainda</strong></div>
                       </CardBody>
                     </Card>
                   ) : (
@@ -374,9 +375,9 @@ export const ManagePage = () => {
                           <Flex justify="space-between" align="start">
                             <Box flex={1}>
                               <HStack mb={1}>
-                                <Heading size="sm">{bank.name}</Heading>
+                                <Heading size="sm"><BankName name={bank.name} /></Heading>
                                 {bank.investments.length > 0 && (
-                                  <Badge colorScheme="purple" borderRadius="full">
+                                  <Badge colorScheme="brand" borderRadius="full">
                                     {bank.investments.length} inv.
                                   </Badge>
                                 )}
@@ -424,11 +425,11 @@ export const ManagePage = () => {
 
             {/* Crypto Tab */}
             <TabPanel p={0}>
-              <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
+              <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={5} alignItems="start">
                 <Card>
                   <CardHeader>
                     <Flex align="center" gap={2}>
-                      <FaPlus color={colors.warning} />
+                      <LuPlus color={colors.warning} />
                       <Heading size="md" fontWeight="700">
                         {editingCrypto ? 'Editar Criptomoeda' : 'Nova Criptomoeda'}
                       </Heading>
@@ -476,7 +477,7 @@ export const ManagePage = () => {
                             flex={1} 
                             variant="outline" 
                             colorScheme="red"
-                            leftIcon={<FaTimes />}
+                            leftIcon={<LuX />}
                             onClick={() => handleCancelEdit('crypto')}
                           >
                             Cancelar
@@ -484,8 +485,8 @@ export const ManagePage = () => {
                         )}
                         <Button 
                           flex={1} 
-                          colorScheme="orange" 
-                          leftIcon={editingCrypto ? <FaSave /> : <FaPlus />}
+                          colorScheme="brand"
+                          leftIcon={editingCrypto ? <LuSave /> : <LuPlus />}
                           onClick={handleCryptoSubmit}
                         >
                           {editingCrypto ? 'Salvar' : 'Adicionar'}
@@ -499,9 +500,7 @@ export const ManagePage = () => {
                   {data.cryptos.length === 0 ? (
                     <Card>
                       <CardBody>
-                        <Text textAlign="center" color={colors.textMuted} py={8}>
-                          Nenhuma criptomoeda cadastrada ainda
-                        </Text>
+                        <div className="empty-state"><span className="empty-icon"><LuBitcoin /></span><strong>Nenhuma criptomoeda cadastrada ainda</strong></div>
                       </CardBody>
                     </Card>
                   ) : (
@@ -552,11 +551,11 @@ export const ManagePage = () => {
 
             {/* Loans Tab */}
             <TabPanel p={0}>
-              <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
+              <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={5} alignItems="start">
                 <Card>
                   <CardHeader>
                     <Flex align="center" gap={2}>
-                      <FaPlus color={colors.accent} />
+                      <LuPlus color={colors.accent} />
                       <Heading size="md" fontWeight="700">
                         {editingLoan ? 'Editar Empréstimo' : 'Novo Empréstimo'}
                       </Heading>
@@ -610,7 +609,7 @@ export const ManagePage = () => {
                             flex={1} 
                             variant="outline" 
                             colorScheme="red"
-                            leftIcon={<FaTimes />}
+                            leftIcon={<LuX />}
                             onClick={() => handleCancelEdit('loan')}
                           >
                             Cancelar
@@ -618,8 +617,8 @@ export const ManagePage = () => {
                         )}
                         <Button 
                           flex={1} 
-                          colorScheme="teal" 
-                          leftIcon={editingLoan ? <FaSave /> : <FaPlus />}
+                          colorScheme="brand"
+                          leftIcon={editingLoan ? <LuSave /> : <LuPlus />}
                           onClick={handleLoanSubmit}
                         >
                           {editingLoan ? 'Salvar' : 'Adicionar'}
@@ -633,9 +632,7 @@ export const ManagePage = () => {
                   {data.loans.length === 0 ? (
                     <Card>
                       <CardBody>
-                        <Text textAlign="center" color={colors.textMuted} py={8}>
-                          Nenhum empréstimo cadastrado ainda
-                        </Text>
+                        <div className="empty-state"><span className="empty-icon"><LuHandCoins /></span><strong>Nenhum empréstimo cadastrado ainda</strong></div>
                       </CardBody>
                     </Card>
                   ) : (
@@ -650,7 +647,7 @@ export const ManagePage = () => {
                               </Text>
                               <HStack spacing={3} mt={1}>
                                 {loan.interestRate > 0 && (
-                                  <Badge colorScheme="purple" borderRadius="full">
+                                  <Badge colorScheme="brand" borderRadius="full">
                                     {loan.interestRate}% juros
                                   </Badge>
                                 )}
@@ -694,7 +691,6 @@ export const ManagePage = () => {
             </TabPanel>
           </TabPanels>
         </Tabs>
-      </Container>
-    </Box>
+    </div>
   );
 };

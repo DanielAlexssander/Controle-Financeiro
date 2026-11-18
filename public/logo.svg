@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <title>Finance Control</title>
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      path { transform-box: fill-box; transform-origin: center bottom; animation: grow .55s cubic-bezier(.2,.75,.25,1) backwards; }
+      path:nth-of-type(2) { animation-delay: .1s; }
+      path:nth-of-type(3) { animation-delay: .2s; }
+      @keyframes grow { from { transform: scaleY(.2); opacity: .3; } to { transform: scaleY(1); opacity: 1; } }
+    }
+  </style>
+  <rect width="48" height="48" rx="13" fill="#173F37"/>
+  <path d="m10 29 7-4v11l-7 4z" fill="#B6D9BD"/>
+  <path d="m20 20 7-4v17l-7 4z" fill="#D6E9C7"/>
+  <path d="m30 12 8-4v20l-8 4z" fill="#F5F1CF"/>
+</svg>

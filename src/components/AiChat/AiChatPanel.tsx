@@ -1,6 +1,7 @@
 import { Badge, Box, Button, Flex, HStack, IconButton, Text, Textarea, VStack, useColorMode } from '@chakra-ui/react';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { FaPaperPlane } from 'react-icons/fa';
+import { LuArrowUp, LuSparkles } from 'react-icons/lu';
+import { SiClaude } from 'react-icons/si';
 import { useFinance } from '../../context/FinanceContext';
 import { useAiBridge } from '../../hooks/useAiBridge';
 import { useAllCryptoPrices } from '../../hooks/useAllCryptoPrices';
@@ -12,6 +13,7 @@ import type { Conexao } from '../../services/ai/chatReducer';
 import { descreverSessao } from '../../services/ai/sessaoInfo';
 import { darkColors, lightColors } from '../../theme/colors';
 import { ChatMessage } from './ChatMessage';
+import { CompatibleModels } from './ClaudeModels';
 
 const STATUS: Record<Conexao, { texto: string; cor: string }> = {
   sem_token: { texto: 'Configure o token do chat em Configurações.', cor: 'orange' },
@@ -38,7 +40,7 @@ export const AiChatPanel = () => {
   const fimRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fimRef.current?.scrollIntoView({ behavior: 'smooth' });
+    fimRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }, [state.mensagens]);
 
   const podeEnviar = state.conexao === 'conectada' && !state.ocupado;
@@ -60,7 +62,7 @@ export const AiChatPanel = () => {
   return (
     <Flex direction="column" h="100%" gap={3}>
       <HStack justify="space-between">
-        <Badge colorScheme={status.cor} px={2} py={1} borderRadius="md" whiteSpace="normal">
+        <Badge role="status" textTransform="none" fontWeight="500" colorScheme={status.cor} px={2} py={1} borderRadius="md" whiteSpace="normal">
           {status.texto}
         </Badge>
         <Button size="xs" variant="ghost" onClick={limpar} isDisabled={state.mensagens.length === 0}>
@@ -68,19 +70,20 @@ export const AiChatPanel = () => {
         </Button>
       </HStack>
 
+      <CompatibleModels />
+
       {sessaoInfo.atual && (
         <Box fontSize="xs" mt={-1}>
-          <Text color={colors.textMuted}>Modelo da sessão: {sessaoInfo.atual}</Text>
+          <Text color={colors.textMuted} className="claude-model"><SiClaude aria-hidden="true" />Modelo da sessão: {sessaoInfo.atual}</Text>
           {sessaoInfo.aviso && <Text color={colors.warning}>{sessaoInfo.aviso}</Text>}
         </Box>
       )}
 
-      <Box flex={1} overflowY="auto" pr={1}>
-        <VStack spacing={3} align="stretch">
+      <Box flex={1} minH={0} overflowY="auto" pr={1} display="flex" flexDirection="column">
+        <VStack spacing={3} flex="1 0 auto" align="stretch">
           {state.mensagens.length === 0 && (
-            <Text fontSize="sm" color={colors.textMuted}>
-              Pergunte sobre seus investimentos, saldos, criptos ou evolução do patrimônio.
-            </Text>
+            <div className="chat-welcome"><span className="chat-symbol"><LuSparkles /></span>
+              <h3>Como posso ajudar?</h3><p>Pergunte sobre seus investimentos, saldos, criptomoedas ou evolução do patrimônio.</p></div>
           )}
           {state.mensagens.map((m) => (
             <ChatMessage key={m.id} mensagem={m} />
@@ -89,13 +92,13 @@ export const AiChatPanel = () => {
         </VStack>
       </Box>
 
-      <VStack spacing={1} align="stretch">
+      <VStack className="chat-composer" spacing={2} align="stretch">
         <HStack align="flex-end">
           <Textarea
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             onKeyDown={aoTeclar}
-            placeholder="Escreva sua pergunta (Enter envia, Shift+Enter quebra linha)"
+            aria-label="Sua pergunta" placeholder="Escreva sua pergunta…"
             maxLength={MAX_PERGUNTA_CHARS}
             rows={2}
             resize="none"
@@ -103,7 +106,7 @@ export const AiChatPanel = () => {
           />
           <IconButton
             aria-label="Enviar pergunta"
-            icon={<FaPaperPlane />}
+            icon={<LuArrowUp />}
             colorScheme="brand"
             onClick={submeter}
             isDisabled={!podeEnviar || !texto.trim()}
@@ -111,7 +114,7 @@ export const AiChatPanel = () => {
           />
         </HStack>
         <Text fontSize="xs" color={colors.textMuted}>
-          Para a IA esquecer a conversa, use /clear no terminal.
+          Enter envia. Shift+Enter quebra a linha. Para a IA esquecer a conversa, use /clear no terminal.
         </Text>
       </VStack>
     </Flex>

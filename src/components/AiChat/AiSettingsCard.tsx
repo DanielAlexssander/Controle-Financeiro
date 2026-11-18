@@ -3,16 +3,17 @@ import {
   useColorMode, useToast,
 } from '@chakra-ui/react';
 import { useState } from 'react';
-import { FaRobot } from 'react-icons/fa';
+import { LuSparkles } from 'react-icons/lu';
 import { loadAiPreferencias, loadAiToken, saveAiPreferencias, saveAiToken } from '../../services/ai/aiSettings';
-import type { Esforco, Modelo } from '../../services/ai/chatProtocol';
+import { MODELOS, type Esforco, type Modelo } from '../../services/ai/chatProtocol';
+import { ClaudeCodeBrand, ClaudeModelName } from './ClaudeModels';
 import { darkColors, lightColors } from '../../theme/colors';
 
-const OPCOES_MODELO: readonly { valor: Modelo; rotulo: string }[] = [
-  { valor: 'sonnet', rotulo: 'Sonnet (equilibrado)' },
-  { valor: 'opus', rotulo: 'Opus (mais capaz)' },
-  { valor: 'haiku', rotulo: 'Haiku (mais rápido)' },
-];
+const perfilModelo: Record<Modelo, string> = {
+  sonnet: 'Equilibrado',
+  opus: 'Mais capaz',
+  haiku: 'Mais rápido',
+};
 
 const OPCOES_ESFORCO: readonly { valor: Esforco; rotulo: string }[] = [
   { valor: 'low', rotulo: 'Esforço baixo' },
@@ -37,7 +38,7 @@ export const AiSettingsCard = () => {
       position: 'top-right',
     });
 
-  const salvarToken = () => avisar(saveAiToken(token), 'Token salvo!', 'Abra o chat pelo botão do robô.');
+  const salvarToken = () => avisar(saveAiToken(token), 'Token salvo!', 'Abra o chat pelo botão do assistente.');
 
   const salvarPreferencias = () =>
     avisar(
@@ -49,26 +50,35 @@ export const AiSettingsCard = () => {
   return (
     <Card>
       <CardHeader pb={2}>
-        <Flex align="center" gap={2}>
-          <Icon as={FaRobot} color={colors.primary} />
+        <Flex align="center" gap={2} wrap="wrap">
+          <Icon as={LuSparkles} color={colors.primary} />
           <Heading size="md" fontWeight="700">Assistente de IA</Heading>
+          <ClaudeCodeBrand />
         </Flex>
       </CardHeader>
       <CardBody pt={2}>
         <VStack spacing={4} align="stretch">
           <Box p={4} borderRadius="lg" bg={colors.bgInput}>
-            <Text fontWeight="600" mb={1}>Modelo</Text>
-            <Text fontSize="sm" color={colors.textMuted} mb={3}>
+            <fieldset className="model-picker">
+              <legend>Modelos compatíveis</legend>
+              <div className="model-options">
+                {MODELOS.map(model => (
+                  <label key={model}>
+                    <input type="radio" name="modelo-assistente" value={model}
+                      checked={preferencias.modelo === model}
+                      onChange={() => setPreferencias({ ...preferencias, modelo: model })} />
+                    <ClaudeModelName model={model} />
+                    <small>{perfilModelo[model]}</small>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <Text fontSize="sm" color={colors.textMuted} my={3}>
               Vale a partir do próximo <Code>financas</Code>. O chat avisa se a sessão aberta estiver com outro modelo.
             </Text>
             <HStack flexWrap={{ base: 'wrap', md: 'nowrap' }}>
               <Select
-                value={preferencias.modelo}
-                onChange={(e) => setPreferencias({ ...preferencias, modelo: e.target.value as Modelo })}
-              >
-                {OPCOES_MODELO.map((o) => <option key={o.valor} value={o.valor}>{o.rotulo}</option>)}
-              </Select>
-              <Select
+                aria-label="Esforço do modelo"
                 value={preferencias.esforco}
                 onChange={(e) => setPreferencias({ ...preferencias, esforco: e.target.value as Esforco })}
               >
@@ -91,6 +101,7 @@ export const AiSettingsCard = () => {
                 type="password"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
+                aria-label="Token do chat"
                 placeholder="Token do chat"
                 autoComplete="off"
               />
