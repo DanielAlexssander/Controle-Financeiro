@@ -1,4 +1,4 @@
-import type { ServerMessage, Sessao } from './chatProtocol';
+import type { HistoricoMensagem, ServerMessage, Sessao } from './chatProtocol';
 
 export type Conexao = 'sem_token' | 'conectando' | 'conectada' | 'desconectada' | 'recusada' | 'substituida';
 
@@ -55,12 +55,21 @@ const concluir = (s: ChatState, texto: string, estado: 'pronta' | 'erro'): ChatS
   return { ...base, ocupado: false };
 };
 
+/** O `financas` manda o histórico ao conectar: ele é a fonte da verdade e substitui o que está na tela. */
+const restaurar = (s: ChatState, mensagens: readonly HistoricoMensagem[]): ChatState => ({
+  ...s,
+  mensagens: mensagens.map((m, i) => ({ id: i + 1, ...m })),
+  proximoId: mensagens.length + 1,
+});
+
 const aplicarServidor = (s: ChatState, msg: ServerMessage): ChatState => {
   switch (msg.type) {
     case 'status':
       return { ...s, ocupado: msg.estado === 'ocupado' };
     case 'sessao':
       return { ...s, sessao: { ...msg.sessao } };
+    case 'historico':
+      return restaurar(s, msg.mensagens);
     case 'parcial': {
       const atual = emAndamento(s);
       return atual ? atualizar(s, atual.id, { texto: atual.texto + msg.texto }) : s;

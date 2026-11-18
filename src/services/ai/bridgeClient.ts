@@ -1,4 +1,10 @@
-import { DEFAULT_BRIDGE_PORT, type ClientMessage, type ServerMessage } from './chatProtocol';
+import {
+  DEFAULT_BRIDGE_PORT,
+  MAX_HISTORICO,
+  type ClientMessage,
+  type HistoricoMensagem,
+  type ServerMessage,
+} from './chatProtocol';
 import type { Conexao } from './chatReducer';
 
 export type SocketLike = {
@@ -30,6 +36,19 @@ export const bridgeUrl = (token: string): string =>
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 
+const AUTORES: readonly unknown[] = ['voce', 'claude'];
+const ESTADOS: readonly unknown[] = ['escrevendo', 'pronta', 'erro'];
+
+const ehMensagemDoHistorico = (v: unknown): v is HistoricoMensagem =>
+  isObject(v) && AUTORES.includes(v.autor) && typeof v.texto === 'string' && ESTADOS.includes(v.estado);
+
+/** Histórico guardado no `financas`: só as mensagens válidas, no máximo MAX_HISTORICO (as mais recentes). */
+const parseHistorico = (mensagens: unknown[]): HistoricoMensagem[] =>
+  mensagens
+    .filter(ehMensagemDoHistorico)
+    .slice(-MAX_HISTORICO)
+    .map(({ autor, texto, estado }) => ({ autor, texto, estado }));
+
 /** Valida o que vem do canal. Qualquer coisa fora do protocolo vira null. */
 export const parseServerMessage = (raw: string): ServerMessage | null => {
   let m: unknown;
@@ -46,6 +65,7 @@ export const parseServerMessage = (raw: string): ServerMessage | null => {
     const { modelo, esforco } = m.sessao;
     if (typeof modelo === 'string' && typeof esforco === 'string') return { type: 'sessao', sessao: { modelo, esforco } };
   }
+  if (m.type === 'historico' && Array.isArray(m.mensagens)) return { type: 'historico', mensagens: parseHistorico(m.mensagens) };
   return null;
 };
 

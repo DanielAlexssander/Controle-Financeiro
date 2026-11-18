@@ -18,6 +18,19 @@ export const PREFERENCIAS_PADRAO: Preferencias = { modelo: 'sonnet', esforco: 'm
 /** Modelo e esforço com que a sessão aberta foi iniciada. */
 export type Sessao = { modelo: string; esforco: string };
 
+/**
+ * Mensagem do histórico do chat. Fica só na memória do `financas`: volta ao reabrir o chat ou
+ * recarregar a página e some quando o terminal fecha. Nada é salvo no navegador.
+ */
+export type HistoricoMensagem = { autor: 'voce' | 'claude'; texto: string; estado: 'escrevendo' | 'pronta' | 'erro' };
+export const MAX_HISTORICO = 100;
+
+/**
+ * Canal → aba do site conectada em /presenca (aberta mesmo com o chat fechado). Ao rodar o `financas`
+ * com uma aba já aberta, ele pede ao canal para abrir o chat nela em vez de abrir outra aba.
+ */
+export type PresencaMessage = { type: 'abrir' };
+
 export type FinanceSnapshot = {
   cotacaoUsdBrl: number;
   totais: {
@@ -50,11 +63,13 @@ export type FinanceSnapshot = {
 export type ClientMessage =
   | { type: 'snapshot'; data: FinanceSnapshot }
   | { type: 'pergunta'; ia: IaId; texto: string }
-  | { type: 'preferencias'; preferencias: Preferencias };
+  | { type: 'preferencias'; preferencias: Preferencias }
+  | { type: 'limpar' };
 
 export type ServerMessage =
   | { type: 'status'; estado: 'pronto' | 'ocupado' }
   | { type: 'sessao'; sessao: Sessao }
   | { type: 'parcial'; texto: string }
   | { type: 'final'; texto: string }
-  | { type: 'erro'; mensagem: string };
+  | { type: 'erro'; mensagem: string }
+  | { type: 'historico'; mensagens: HistoricoMensagem[] };

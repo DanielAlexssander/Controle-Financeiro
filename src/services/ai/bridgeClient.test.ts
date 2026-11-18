@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bridgeUrl, createBridgeClient, parseServerMessage, type SocketLike } from './bridgeClient';
 import type { Conexao } from './chatReducer';
-import type { ServerMessage } from './chatProtocol';
+import { MAX_HISTORICO, type ServerMessage } from './chatProtocol';
 
 class FakeSocket implements SocketLike {
   readyState = 0;
@@ -124,4 +124,28 @@ describe('parseServerMessage: sessao', () => {
       .toEqual({ type: 'sessao', sessao: { modelo: 'opus', esforco: 'high' } }));
   it('rejeita sessão incompleta', () =>
     expect(parseServerMessage('{"type":"sessao","sessao":{"modelo":"opus"}}')).toBeNull());
+});
+
+describe('parseServerMessage: historico', () => {
+  const historico = (mensagens: unknown) => parseServerMessage(JSON.stringify({ type: 'historico', mensagens }));
+  const ok = { autor: 'voce', texto: 'oi', estado: 'pronta' };
+
+  it('aceita o histórico guardado no financas', () =>
+    expect(historico([ok, { autor: 'claude', texto: 'parte', estado: 'escrevendo' }])).toEqual({
+      type: 'historico',
+      mensagens: [ok, { autor: 'claude', texto: 'parte', estado: 'escrevendo' }],
+    }));
+
+  it('descarta mensagens malformadas e mantém as válidas', () =>
+    expect(historico([ok, null, { autor: 'hacker', texto: 'x', estado: 'pronta' }, { autor: 'claude', texto: 1, estado: 'pronta' },
+      { autor: 'claude', texto: 'x', estado: 'outro' }])).toEqual({ type: 'historico', mensagens: [ok] }));
+
+  it('rejeita histórico sem lista', () => expect(historico('x')).toBeNull());
+
+  it('fica só com as últimas MAX_HISTORICO mensagens', () => {
+    const muitas = Array.from({ length: MAX_HISTORICO + 3 }, (_, i) => ({ ...ok, texto: `m${i}` }));
+    const r = historico(muitas);
+    expect(r?.type === 'historico' && r.mensagens.length).toBe(MAX_HISTORICO);
+    expect(r?.type === 'historico' && r.mensagens[0].texto).toBe('m3');
+  });
 });

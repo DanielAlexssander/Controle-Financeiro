@@ -8,7 +8,9 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 import { LuSparkles } from 'react-icons/lu';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
+import { usePresencaIa } from '../../hooks/usePresencaIa';
+import { loadAiToken } from '../../services/ai/aiSettings';
 
 const AiChatPanel = lazy(() =>
   import('./AiChatPanel').then((module) => ({ default: module.AiChatPanel })),
@@ -16,6 +18,9 @@ const AiChatPanel = lazy(() =>
 
 export const AiChat = ({ abrirAoIniciar = false }: { abrirAoIniciar?: boolean }) => {
   const { isOpen, onOpen, onClose } = useDisclosure({ defaultIsOpen: abrirAoIniciar });
+  const [token] = useState(loadAiToken);
+  // Rodar o `financas` com esta aba aberta abre o chat aqui, em vez de abrir outra aba.
+  usePresencaIa(token, onOpen);
 
   return (
     <>

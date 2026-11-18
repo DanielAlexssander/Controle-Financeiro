@@ -65,7 +65,7 @@ export const AiChatPanel = () => {
         <Badge role="status" textTransform="none" fontWeight="500" colorScheme={status.cor} px={2} py={1} borderRadius="md" whiteSpace="normal">
           {status.texto}
         </Badge>
-        <Button size="xs" variant="ghost" onClick={limpar} isDisabled={state.mensagens.length === 0}>
+        <Button size="xs" variant="ghost" onClick={limpar} isDisabled={state.mensagens.length === 0 || state.ocupado}>
           Limpar chat
         </Button>
       </HStack>

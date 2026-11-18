@@ -11,6 +11,8 @@ const COMPONENTS: Components = {
       {children}
     </a>
   ),
+  // A IA lê páginas da web: uma imagem com dados na URL vazaria a carteira ao carregar. Só o texto alternativo.
+  img: ({ alt }) => <span>{alt ? `[imagem: ${alt}]` : '[imagem]'}</span>,
   table: ({ children }) => (
     <div className="md-tabela">
       <table>{children}</table>

@@ -10,6 +10,7 @@ export type AiBridge = { state: ChatState; enviar(texto: string): void; limpar()
 /**
  * Liga o chat ao canal local. Conectar/reconectar, enviar dados e enviar a preferência de modelo
  * nunca acionam o modelo. A preferência fica salva no PC e vale no próximo `financas`.
+ * O histórico fica só na memória do `financas` e chega ao conectar; nada é salvo no navegador.
  */
 export const useAiBridge = (snapshot: FinanceSnapshot | null, token: string, preferencias: Preferencias): AiBridge => {
   const [state, dispatch] = useReducer(chatReducer, CHAT_INICIAL);
@@ -62,7 +63,11 @@ export const useAiBridge = (snapshot: FinanceSnapshot | null, token: string, pre
     if (!enviado) dispatch({ tipo: 'servidor', mensagem: { type: 'erro', mensagem: MSG_DESCONECTADA } });
   }, []);
 
-  const limpar = useCallback(() => dispatch({ tipo: 'limpar' }), []);
+  /** Apaga o chat na tela e o histórico guardado no `financas` (a memória da IA só sai com /clear). */
+  const limpar = useCallback(() => {
+    dispatch({ tipo: 'limpar' });
+    clientRef.current?.send({ type: 'limpar' });
+  }, []);
 
   return { state: token ? state : { ...state, conexao: 'sem_token' }, enviar, limpar };
 };

@@ -83,3 +83,35 @@ describe('chatReducer: sessão', () => {
     expect(chatReducer(CHAT_INICIAL, { tipo: 'servidor', mensagem: { type: 'sessao', sessao: { modelo: 'sonnet', esforco: 'medium' } } }).sessao)
       .toEqual({ modelo: 'sonnet', esforco: 'medium' }));
 });
+
+describe('chatReducer: histórico guardado no financas', () => {
+  const historico = (s: ChatState, mensagens: Extract<ServerMessage, { type: 'historico' }>['mensagens']) =>
+    servidor(s, { type: 'historico', mensagens });
+
+  it('ao conectar, o histórico substitui o chat e a numeração continua', () => {
+    const s = historico(enviar(CHAT_INICIAL, 'local'), [
+      { autor: 'voce', texto: 'a', estado: 'pronta' },
+      { autor: 'claude', texto: 'b', estado: 'pronta' },
+    ]);
+    expect(s.mensagens).toEqual([
+      { id: 1, autor: 'voce', texto: 'a', estado: 'pronta' },
+      { id: 2, autor: 'claude', texto: 'b', estado: 'pronta' },
+    ]);
+    expect(enviar(s, 'c').mensagens.at(-2)).toEqual({ id: 3, autor: 'voce', texto: 'c', estado: 'pronta' });
+  });
+
+  it('resposta em andamento volta e continua recebendo os parciais', () => {
+    const s = historico(CHAT_INICIAL, [
+      { autor: 'voce', texto: 'a', estado: 'pronta' },
+      { autor: 'claude', texto: 'par', estado: 'escrevendo' },
+    ]);
+    const depois = servidor(servidor(s, { type: 'parcial', texto: 'te' }), { type: 'final', texto: 'parte final' });
+    expect(depois.mensagens.at(-1)).toEqual({ id: 2, autor: 'claude', texto: 'parte final', estado: 'pronta' });
+  });
+
+  it('histórico vazio (financas reiniciado) apaga o chat', () =>
+    expect(historico(servidor(enviar(CHAT_INICIAL), { type: 'final', texto: 'r' }), []).mensagens).toEqual([]));
+
+  it('limpar apaga as mensagens', () =>
+    expect(chatReducer(servidor(enviar(CHAT_INICIAL), { type: 'final', texto: 'r' }), { tipo: 'limpar' }).mensagens).toEqual([]));
+});

