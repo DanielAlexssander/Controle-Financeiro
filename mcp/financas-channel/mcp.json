@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "financas": {
-      "command": "bun",
-      "args": ["mcp/financas-channel/src/server.ts"]
-    }
-  }
-}

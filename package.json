@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "ia": "bun mcp/financas-channel/scripts/start.ts local",
+    "ia": "financas local",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

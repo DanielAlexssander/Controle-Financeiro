@@ -1,4 +1,5 @@
-// Protocolo do chat de IA, compartilhado entre o site e o canal MCP (mcp/financas-channel).
+// Contrato do chat entre o site e o canal MCP (repositório Mcp-Financas: src/chatProtocol.ts).
+// Cópia: mantenha os dois arquivos iguais.
 // Só tipos e constantes: nenhum código de runtime aqui.
 
 export const DEFAULT_BRIDGE_PORT = 8790;
