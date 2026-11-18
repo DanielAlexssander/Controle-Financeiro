@@ -16,6 +16,8 @@ interface FinanceContextType {
   updateMonthlyGrowth: (month: string, growth: MonthlyGrowth) => void;
   deleteMonthlyGrowth: (month: string) => void;
   updateDiversification: (diversification: FinanceData['diversification']) => void;
+  /** Troca todos os dados de uma vez (alterações da IA confirmadas pelo usuário). */
+  substituirDados: (dados: FinanceData) => void;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -56,9 +58,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const updateMonthlyGrowth = (month: string, growth: MonthlyGrowth) => setData(d => ({ ...d, monthlyGrowth: d.monthlyGrowth.map(g => g.month === month ? growth : g) }));
   const deleteMonthlyGrowth = (month: string) => setData(d => ({ ...d, monthlyGrowth: d.monthlyGrowth.filter(g => g.month !== month) }));
   const updateDiversification = (diversification: FinanceData['diversification']) => setData(d => ({ ...d, diversification }));
+  const substituirDados = (dados: FinanceData) => setData(dados);
 
   return (
-    <FinanceContext.Provider value={{ data, addBank, updateBank, deleteBank, addCrypto, updateCrypto, deleteCrypto, addLoan, updateLoan, deleteLoan, addMonthlyGrowth, updateMonthlyGrowth, deleteMonthlyGrowth, updateDiversification }}>
+    <FinanceContext.Provider value={{ data, addBank, updateBank, deleteBank, addCrypto, updateCrypto, deleteCrypto, addLoan, updateLoan, deleteLoan, addMonthlyGrowth, updateMonthlyGrowth, deleteMonthlyGrowth, updateDiversification, substituirDados }}>
       {children}
     </FinanceContext.Provider>
   );

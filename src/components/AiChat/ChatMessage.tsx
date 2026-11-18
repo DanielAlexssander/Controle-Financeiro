@@ -1,4 +1,5 @@
 import { Box, Flex, HStack, Spinner, Text, useColorMode } from '@chakra-ui/react';
+import type { ReactNode } from 'react';
 import type { ChatMensagem } from '../../services/ai/chatReducer';
 import { darkColors, lightColors } from '../../theme/colors';
 import { MarkdownResposta } from './MarkdownResposta';
@@ -35,11 +36,14 @@ const markdownSx = (c: Cores) => ({
   '& tbody tr:last-of-type td': { borderBottom: 'none' },
 });
 
-export const ChatMessage = ({ mensagem }: { mensagem: ChatMensagem }) => {
+/** `proposta`: cartão de confirmação mostrado acima do texto da resposta da IA. */
+export const ChatMessage = ({ mensagem, proposta }: { mensagem: ChatMensagem; proposta?: ReactNode }) => {
   const { colorMode } = useColorMode();
   const colors = colorMode === 'dark' ? darkColors : lightColors;
   const doUsuario = mensagem.autor === 'voce';
-  const pensando = mensagem.estado === 'escrevendo' && mensagem.texto === '';
+  // Com o cartão esperando o clique, quem espera é a IA: sem "pensando…" até a decisão.
+  const esperandoVoce = mensagem.proposta?.status === 'pendente';
+  const pensando = mensagem.estado === 'escrevendo' && mensagem.texto === '' && !esperandoVoce;
 
   return (
     <Flex justify={doUsuario ? 'flex-end' : 'flex-start'}>
@@ -57,13 +61,14 @@ export const ChatMessage = ({ mensagem }: { mensagem: ChatMensagem }) => {
         wordBreak="break-word"
       >
         {doUsuario && <Text whiteSpace="pre-wrap">{mensagem.texto}</Text>}
+        {!doUsuario && proposta}
         {!doUsuario && pensando && (
           <HStack spacing={2} color={colors.textMuted}>
             <Spinner size="xs" />
             <Text>pensando…</Text>
           </HStack>
         )}
-        {!doUsuario && !pensando && (
+        {!doUsuario && !pensando && mensagem.texto !== '' && (
           <Box sx={markdownSx(colors)}>
             <MarkdownResposta texto={mensagem.texto} />
           </Box>

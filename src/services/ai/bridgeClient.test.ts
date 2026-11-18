@@ -149,3 +149,28 @@ describe('parseServerMessage: historico', () => {
     expect(r?.type === 'historico' && r.mensagens[0].texto).toBe('m3');
   });
 });
+
+describe('parseServerMessage: proposta', () => {
+  const proposta = (p: unknown) => parseServerMessage(JSON.stringify({ type: 'proposta', proposta: p }));
+  const OPS = [{ alvo: 'cripto', acao: 'editar', id: 'c1', dados: { simbolo: 'eth' } }];
+
+  it('aceita proposta válida e normaliza as operações', () =>
+    expect(proposta({ id: 'P1', resumo: ' Trocar ', operacoes: OPS })).toEqual({
+      type: 'proposta',
+      proposta: { id: 'P1', resumo: 'Trocar', operacoes: [{ alvo: 'cripto', acao: 'editar', id: 'c1', dados: { simbolo: 'ETH' } }] },
+    }));
+
+  it('rejeita operação inválida, id ou resumo inválidos', () => {
+    expect(proposta({ id: 'P1', resumo: 'x', operacoes: [{ alvo: 'banco', acao: 'apagar' }] })).toBeNull();
+    expect(proposta({ id: '', resumo: 'x', operacoes: OPS })).toBeNull();
+    expect(proposta({ id: 'P1', resumo: '', operacoes: OPS })).toBeNull();
+    expect(proposta({ id: 'P1', resumo: 'x'.repeat(301), operacoes: OPS })).toBeNull();
+    expect(proposta(null)).toBeNull();
+  });
+
+  it('aceita proposta_encerrada por expiração e rejeita outros motivos', () => {
+    expect(parseServerMessage('{"type":"proposta_encerrada","id":"P1","motivo":"expirou"}'))
+      .toEqual({ type: 'proposta_encerrada', id: 'P1', motivo: 'expirou' });
+    expect(parseServerMessage('{"type":"proposta_encerrada","id":"P1","motivo":"outro"}')).toBeNull();
+  });
+});

@@ -3,8 +3,10 @@ import {
   MAX_HISTORICO,
   type ClientMessage,
   type HistoricoMensagem,
+  type Proposta,
   type ServerMessage,
 } from './chatProtocol';
+import { validarOperacoes } from './operacoes';
 import type { Conexao } from './chatReducer';
 
 export type SocketLike = {
@@ -42,6 +44,18 @@ const ESTADOS: readonly unknown[] = ['escrevendo', 'pronta', 'erro'];
 const ehMensagemDoHistorico = (v: unknown): v is HistoricoMensagem =>
   isObject(v) && AUTORES.includes(v.autor) && typeof v.texto === 'string' && ESTADOS.includes(v.estado);
 
+const MAX_ID_PROPOSTA = 100;
+const MAX_RESUMO = 300;
+
+const textoAte = (v: unknown, max: number): v is string => typeof v === 'string' && v.trim().length > 0 && v.length <= max;
+
+/** Proposta de alteração vinda do canal: validada de novo aqui (nunca confiar no que chega). */
+const parseProposta = (v: unknown): Proposta | null => {
+  if (!isObject(v) || !textoAte(v.id, MAX_ID_PROPOSTA) || !textoAte(v.resumo, MAX_RESUMO)) return null;
+  const validacao = validarOperacoes(v.operacoes);
+  return validacao.ok ? { id: v.id, resumo: v.resumo.trim(), operacoes: validacao.operacoes } : null;
+};
+
 /** Histórico guardado no `financas`: só as mensagens válidas, no máximo MAX_HISTORICO (as mais recentes). */
 const parseHistorico = (mensagens: unknown[]): HistoricoMensagem[] =>
   mensagens
@@ -66,6 +80,13 @@ export const parseServerMessage = (raw: string): ServerMessage | null => {
     if (typeof modelo === 'string' && typeof esforco === 'string') return { type: 'sessao', sessao: { modelo, esforco } };
   }
   if (m.type === 'historico' && Array.isArray(m.mensagens)) return { type: 'historico', mensagens: parseHistorico(m.mensagens) };
+  if (m.type === 'proposta') {
+    const proposta = parseProposta(m.proposta);
+    return proposta ? { type: 'proposta', proposta } : null;
+  }
+  if (m.type === 'proposta_encerrada' && textoAte(m.id, MAX_ID_PROPOSTA) && m.motivo === 'expirou') {
+    return { type: 'proposta_encerrada', id: m.id, motivo: 'expirou' };
+  }
   return null;
 };
 

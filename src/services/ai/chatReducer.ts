@@ -1,12 +1,18 @@
-import type { HistoricoMensagem, ServerMessage, Sessao } from './chatProtocol';
+import type { HistoricoMensagem, Proposta, ServerMessage, Sessao } from './chatProtocol';
 
 export type Conexao = 'sem_token' | 'conectando' | 'conectada' | 'desconectada' | 'recusada' | 'substituida';
+
+export type StatusProposta = 'pendente' | 'aplicada' | 'recusada' | 'expirou' | 'falhou';
+
+/** Proposta de alteração dos dados mostrada como cartão dentro da resposta da IA. */
+export type PropostaNaTela = { proposta: Proposta; status: StatusProposta; detalhe?: string };
 
 export type ChatMensagem = {
   id: number;
   autor: 'voce' | 'claude';
   texto: string;
   estado: 'escrevendo' | 'pronta' | 'erro';
+  proposta?: PropostaNaTela;
 };
 
 export type ChatState = {
@@ -22,7 +28,8 @@ export type ChatAction =
   | { tipo: 'conexao'; conexao: Conexao }
   | { tipo: 'enviada'; texto: string }
   | { tipo: 'servidor'; mensagem: ServerMessage }
-  | { tipo: 'limpar' };
+  | { tipo: 'limpar' }
+  | { tipo: 'proposta_status'; id: string; status: StatusProposta; detalhe?: string };
 
 export const CHAT_INICIAL: ChatState = {
   conexao: 'sem_token',
@@ -62,6 +69,26 @@ const restaurar = (s: ChatState, mensagens: readonly HistoricoMensagem[]): ChatS
   proximoId: mensagens.length + 1,
 });
 
+const comProposta = (s: ChatState, id: string): ChatMensagem | undefined =>
+  s.mensagens.find((m) => m.proposta?.proposta.id === id);
+
+/** Mostra a proposta na resposta em andamento (ou numa nova). Reenvio da mesma proposta não duplica. */
+const receberProposta = (s: ChatState, proposta: Proposta): ChatState => {
+  if (comProposta(s, proposta.id)) return s;
+  const naTela: PropostaNaTela = { proposta, status: 'pendente' };
+  const atual = emAndamento(s);
+  if (atual) return atualizar(s, atual.id, { proposta: naTela });
+  const nova = adicionar(s, 'claude', '', 'escrevendo');
+  return atualizar(nova, s.proximoId, { proposta: naTela });
+};
+
+const mudarStatusProposta = (s: ChatState, id: string, status: StatusProposta, detalhe?: string): ChatState => {
+  const m = comProposta(s, id);
+  if (!m?.proposta) return s;
+  const proposta: PropostaNaTela = detalhe === undefined ? { ...m.proposta, status } : { ...m.proposta, status, detalhe };
+  return atualizar(s, m.id, { proposta });
+};
+
 const aplicarServidor = (s: ChatState, msg: ServerMessage): ChatState => {
   switch (msg.type) {
     case 'status':
@@ -70,6 +97,10 @@ const aplicarServidor = (s: ChatState, msg: ServerMessage): ChatState => {
       return { ...s, sessao: { ...msg.sessao } };
     case 'historico':
       return restaurar(s, msg.mensagens);
+    case 'proposta':
+      return receberProposta(s, msg.proposta);
+    case 'proposta_encerrada':
+      return comProposta(s, msg.id)?.proposta?.status === 'pendente' ? mudarStatusProposta(s, msg.id, 'expirou') : s;
     case 'parcial': {
       const atual = emAndamento(s);
       return atual ? atualizar(s, atual.id, { texto: atual.texto + msg.texto }) : s;
@@ -96,5 +127,7 @@ export const chatReducer = (s: ChatState, action: ChatAction): ChatState => {
       return aplicarServidor(s, action.mensagem);
     case 'limpar':
       return { ...s, mensagens: [] };
+    case 'proposta_status':
+      return mudarStatusProposta(s, action.id, action.status, action.detalhe);
   }
 };

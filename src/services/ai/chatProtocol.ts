@@ -31,6 +31,37 @@ export const MAX_HISTORICO = 100;
  */
 export type PresencaMessage = { type: 'abrir' };
 
+/**
+ * Mudanças que a IA propõe nos dados do site (ferramenta `propor_alteracoes`). Nada é aplicado sem o
+ * usuário clicar em "Confirmar tudo" no site. Validação em `operacoes.ts` (cópia nos dois repositórios).
+ */
+export const MAX_OPERACOES = 20;
+export type AlvoOperacao = 'banco' | 'investimento' | 'cripto' | 'emprestimo' | 'mes';
+export type InvestimentoNovo = { nome: string; tipo: string; valorBrl: number };
+export type Operacao =
+  | { alvo: 'banco'; acao: 'adicionar'; dados: { nome: string; saldoBrl: number; investimentos?: InvestimentoNovo[] } }
+  | { alvo: 'banco'; acao: 'editar'; id: string; dados: { nome?: string; saldoBrl?: number } }
+  | { alvo: 'banco'; acao: 'apagar'; id: string }
+  | { alvo: 'investimento'; acao: 'adicionar'; bancoId: string; dados: InvestimentoNovo }
+  | { alvo: 'investimento'; acao: 'editar'; bancoId: string; id: string; dados: Partial<InvestimentoNovo> }
+  | { alvo: 'investimento'; acao: 'apagar'; bancoId: string; id: string }
+  | { alvo: 'cripto'; acao: 'adicionar'; dados: { simbolo: string; quantidade: number; precoCompraUsd: number } }
+  | { alvo: 'cripto'; acao: 'editar'; id: string; dados: { simbolo?: string; quantidade?: number; precoCompraUsd?: number } }
+  | { alvo: 'cripto'; acao: 'apagar'; id: string }
+  | { alvo: 'emprestimo'; acao: 'adicionar'; dados: { nome: string; valorBrl: number; taxaJurosPct: number; vencimento: string } }
+  | {
+      alvo: 'emprestimo';
+      acao: 'editar';
+      id: string;
+      dados: { nome?: string; valorBrl?: number; taxaJurosPct?: number; vencimento?: string };
+    }
+  | { alvo: 'emprestimo'; acao: 'apagar'; id: string }
+  | { alvo: 'mes'; acao: 'definir'; mes: string; dados: { patrimonioBrl: number } }
+  | { alvo: 'mes'; acao: 'apagar'; mes: string };
+export type Proposta = { id: string; resumo: string; operacoes: Operacao[] };
+export type ItemCriado = { alvo: AlvoOperacao; id: string; nome: string };
+export type ResultadoDecisao = 'aplicada' | 'recusada' | 'falhou';
+
 export type FinanceSnapshot = {
   cotacaoUsdBrl: number;
   totais: {
@@ -42,11 +73,13 @@ export type FinanceSnapshot = {
     patrimonioBrl: number;
   };
   bancos: {
+    id: string;
     nome: string;
     saldoBrl: number;
-    investimentos: { nome: string; tipo: string; valorBrl: number }[];
+    investimentos: { id: string; nome: string; tipo: string; valorBrl: number }[];
   }[];
   criptos: {
+    id: string;
     simbolo: string;
     quantidade: number;
     precoCompraUsd: number;
@@ -54,7 +87,7 @@ export type FinanceSnapshot = {
     valorAtualUsd: number | null;
     variacaoPct: number | null;
   }[];
-  emprestimos: { nome: string; valorBrl: number; taxaJuros: number; vencimento: string }[];
+  emprestimos: { id: string; nome: string; valorBrl: number; taxaJuros: number; vencimento: string }[];
   historicoMensal: { mes: string; patrimonioBrl: number }[];
   diversificacaoPct: { acoes: number; cripto: number; rendaFixa: number; caixa: number };
   observacoes: string[];
@@ -64,7 +97,8 @@ export type ClientMessage =
   | { type: 'snapshot'; data: FinanceSnapshot }
   | { type: 'pergunta'; ia: IaId; texto: string }
   | { type: 'preferencias'; preferencias: Preferencias }
-  | { type: 'limpar' };
+  | { type: 'limpar' }
+  | { type: 'decisao'; id: string; resultado: ResultadoDecisao; detalhe?: string; criados?: ItemCriado[] };
 
 export type ServerMessage =
   | { type: 'status'; estado: 'pronto' | 'ocupado' }
@@ -72,4 +106,6 @@ export type ServerMessage =
   | { type: 'parcial'; texto: string }
   | { type: 'final'; texto: string }
   | { type: 'erro'; mensagem: string }
-  | { type: 'historico'; mensagens: HistoricoMensagem[] };
+  | { type: 'historico'; mensagens: HistoricoMensagem[] }
+  | { type: 'proposta'; proposta: Proposta }
+  | { type: 'proposta_encerrada'; id: string; motivo: 'expirou' };

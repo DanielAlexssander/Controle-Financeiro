@@ -17,6 +17,7 @@ const criptoSnapshot = (crypto: Crypto, pricesUsd: Readonly<Record<string, numbe
   const preco = pricesUsd[crypto.symbol];
   const temPreco = typeof preco === 'number' && preco > 0;
   return {
+    id: crypto.id,
     simbolo: crypto.symbol,
     quantidade: crypto.amount,
     precoCompraUsd: crypto.purchasePrice,
@@ -52,12 +53,14 @@ export const buildSnapshot = (
       patrimonioBrl: round2(bancosBrl + criptoBrl + emprestimosBrl),
     },
     bancos: data.banks.map((b) => ({
+      id: b.id,
       nome: b.name,
       saldoBrl: b.balance,
-      investimentos: b.investments.map((i) => ({ nome: i.name, tipo: i.type, valorBrl: i.amount })),
+      investimentos: b.investments.map((i) => ({ id: i.id, nome: i.name, tipo: i.type, valorBrl: i.amount })),
     })),
     criptos,
     emprestimos: data.loans.map((l) => ({
+      id: l.id,
       nome: l.name,
       valorBrl: l.amount,
       taxaJuros: l.interestRate,

@@ -21,7 +21,7 @@ describe('buildSnapshot', () => {
 
   it('cripto com preço 0 vai como null e fica fora dos totais', () => {
     const eth = buildSnapshot(data, { BTC: 50000, ETH: 0 }, 5).criptos.find(c => c.simbolo === 'ETH');
-    expect(eth).toEqual({ simbolo: 'ETH', quantidade: 1, precoCompraUsd: 2000, precoAtualUsd: null, valorAtualUsd: null, variacaoPct: null });
+    expect(eth).toEqual({ id: 'c2', simbolo: 'ETH', quantidade: 1, precoCompraUsd: 2000, precoAtualUsd: null, valorAtualUsd: null, variacaoPct: null });
   });
 
   it('cripto sem preço na tabela também vai como null', () =>
@@ -33,8 +33,8 @@ describe('buildSnapshot', () => {
   it('mapeia bancos, empréstimos, histórico e diversificação', () => {
     const s = buildSnapshot(data, {}, 5);
     expect(s.cotacaoUsdBrl).toBe(5);
-    expect(s.bancos).toEqual([{ nome: 'Banco', saldoBrl: 1000, investimentos: [{ nome: 'CDB', tipo: 'Renda fixa', valorBrl: 500 }] }]);
-    expect(s.emprestimos).toEqual([{ nome: 'Empréstimo', valorBrl: 200, taxaJuros: 1.5, vencimento: '2026-12-01' }]);
+    expect(s.bancos).toEqual([{ id: 'b1', nome: 'Banco', saldoBrl: 1000, investimentos: [{ id: 'i1', nome: 'CDB', tipo: 'Renda fixa', valorBrl: 500 }] }]);
+    expect(s.emprestimos).toEqual([{ id: 'l1', nome: 'Empréstimo', valorBrl: 200, taxaJuros: 1.5, vencimento: '2026-12-01' }]);
     expect(s.historicoMensal).toEqual([{ mes: '2026-10', patrimonioBrl: 25000 }]);
     expect(s.diversificacaoPct).toEqual({ acoes: 10, cripto: 50, rendaFixa: 30, caixa: 10 });
   });

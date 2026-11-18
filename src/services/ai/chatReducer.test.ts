@@ -115,3 +115,41 @@ describe('chatReducer: histórico guardado no financas', () => {
   it('limpar apaga as mensagens', () =>
     expect(chatReducer(servidor(enviar(CHAT_INICIAL), { type: 'final', texto: 'r' }), { tipo: 'limpar' }).mensagens).toEqual([]));
 });
+
+describe('chatReducer: propostas de alteração', () => {
+  const PROPOSTA = { id: 'P1', resumo: 'Novo banco', operacoes: [{ alvo: 'banco' as const, acao: 'adicionar' as const, dados: { nome: 'Inter', saldoBrl: 1 } }] };
+  const chegou = (s: ChatState) => servidor(s, { type: 'proposta', proposta: PROPOSTA });
+
+  it('anexa a proposta pendente à resposta em andamento', () => {
+    const s = chegou(enviar(CHAT_INICIAL, 'adiciona o Inter'));
+    expect(s.mensagens[1]).toEqual({ id: 2, autor: 'claude', texto: '', estado: 'escrevendo', proposta: { proposta: PROPOSTA, status: 'pendente' } });
+  });
+
+  it('sem resposta em andamento, cria uma para mostrar o cartão', () => {
+    const s = chegou(CHAT_INICIAL);
+    expect(s.mensagens).toEqual([{ id: 1, autor: 'claude', texto: '', estado: 'escrevendo', proposta: { proposta: PROPOSTA, status: 'pendente' } }]);
+  });
+
+  it('a mesma proposta reenviada (reconexão) não duplica', () => {
+    const s = chegou(chegou(enviar(CHAT_INICIAL)));
+    expect(s.mensagens.filter((m) => m.proposta)).toHaveLength(1);
+  });
+
+  it('proposta_encerrada marca como expirada; proposta_status muda o status', () => {
+    const base = chegou(enviar(CHAT_INICIAL));
+    expect(servidor(base, { type: 'proposta_encerrada', id: 'P1', motivo: 'expirou' }).mensagens[1].proposta?.status).toBe('expirou');
+    const falhou = chatReducer(base, { tipo: 'proposta_status', id: 'P1', status: 'falhou', detalhe: 'banco b9 não existe' });
+    expect(falhou.mensagens[1].proposta).toEqual({ proposta: PROPOSTA, status: 'falhou', detalhe: 'banco b9 não existe' });
+    expect(chatReducer(base, { tipo: 'proposta_status', id: 'outra', status: 'aplicada' })).toEqual(base);
+  });
+
+  it('expirou não sobrescreve uma decisão já tomada', () => {
+    const aplicada = chatReducer(chegou(enviar(CHAT_INICIAL)), { tipo: 'proposta_status', id: 'P1', status: 'aplicada' });
+    expect(servidor(aplicada, { type: 'proposta_encerrada', id: 'P1', motivo: 'expirou' }).mensagens[1].proposta?.status).toBe('aplicada');
+  });
+
+  it('a resposta final da IA mantém o cartão na mesma bolha', () => {
+    const s = servidor(chatReducer(chegou(enviar(CHAT_INICIAL)), { tipo: 'proposta_status', id: 'P1', status: 'aplicada' }), { type: 'final', texto: 'Pronto!' });
+    expect(s.mensagens[1]).toMatchObject({ texto: 'Pronto!', estado: 'pronta', proposta: { status: 'aplicada' } });
+  });
+});
