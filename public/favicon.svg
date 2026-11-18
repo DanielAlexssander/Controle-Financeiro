@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <title>Finance Control</title>
+  <rect width="48" height="48" rx="13" fill="#173F37"/>
+  <g transform="translate(-6 -6) scale(1.25)">
+    <path d="m10 29 7-4v11l-7 4z" fill="#B6D9BD"/>
+    <path d="m20 20 7-4v17l-7 4z" fill="#D6E9C7"/>
+    <path d="m30 12 8-4v20l-8 4z" fill="#F5F1CF"/>
+  </g>
+</svg>

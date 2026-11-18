@@ -189,13 +189,13 @@ button:focus-visible, a:focus-visible { outline: 3px solid #79ab88; outline-offs
 .mobile-sidebar { padding: 32px 18px 24px !important; }
 @keyframes reveal { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: no-preference) {
-  .coin-art .coin-stack { animation: coin-settle .7s cubic-bezier(.2,.75,.25,1) backwards; }
-  .coin-stack:nth-last-child(2) { animation-delay: .13s; }
-  .coin-stack:last-child { animation-delay: .26s; }
-  @keyframes coin-settle {
-    from { opacity: 0; translate: 0 -14px; }
-    72% { opacity: 1; translate: 0 1.5px; }
-    to { translate: 0 0; }
+  .coin-top { animation: coin-lift 4.8s ease-in-out infinite; transform-origin: 0 0; }
+  .coin-stack:nth-last-child(2) .coin-top { animation-delay: .65s; }
+  .coin-stack:last-child .coin-top { animation-delay: 1.3s; }
+  @keyframes coin-lift {
+    0%, 35%, 100% { transform: none; }
+    15% { transform: translateY(-21px) rotate(-6deg) scaleY(.72); }
+    28% { transform: translateY(1px) scaleY(.96); }
   }
 }
 @media (max-width: 1100px) {

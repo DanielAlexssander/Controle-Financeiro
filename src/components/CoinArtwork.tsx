@@ -1,39 +1,41 @@
-// Engraved coin stacks, drawn on a common elliptical grid.
+import { useId } from 'react';
+
 function Coin({ x, y, radius, layers }: { x: number; y: number; radius: number; layers: number }) {
+  const id = useId();
+  const rimId = `${id}-rim`;
+  const faceId = `${id}-face`;
   const ry = radius * 0.34;
-  const marks = Array.from({ length: 33 }, (_, i) => (Math.PI * i) / 32);
+  const grooves = Array.from({ length: 33 }, (_, i) => {
+    const angle = (Math.PI * i) / 32;
+    return `M${radius * Math.cos(angle)} ${ry * Math.sin(angle) + 1}v5`;
+  }).join(' ');
+
   return (
     <g className="coin-stack" transform={`translate(${x} ${y})`} stroke="#b6cba3" strokeWidth="1.2">
-      {Array.from({ length: layers }, (_, i) => {
-        const offset = (layers - i - 1) * 8;
-        return (
-          <g key={i} transform={`translate(0 ${offset})`}>
-            <path
-              fill="#275647"
-              d={`M${-radius},0 a${radius},${ry} 0 0 1 ${radius * 2},0 v7 a${radius},${ry} 0 0 1 ${-radius * 2},0z`}
-            />
-            {marks.map((a) => (
-              <path
-                key={a}
-                strokeWidth=".75"
-                opacity=".7"
-                d={`M${radius * Math.cos(a)} ${ry * Math.sin(a) + 1}v5`}
-              />
-            ))}
+      <defs>
+        <g id={rimId}>
+          <path
+            fill="#275647"
+            d={`M${-radius},0 a${radius},${ry} 0 0 1 ${radius * 2},0 v7 a${radius},${ry} 0 0 1 ${-radius * 2},0z`}
+          />
+          <path d={grooves} strokeWidth=".75" opacity=".7" />
+        </g>
+        <g id={faceId}>
+          <ellipse rx={radius} ry={ry} fill="#34634f" />
+          <ellipse rx={radius * 0.9} ry={ry * 0.77} strokeWidth=".9" />
+          <ellipse rx={radius * 0.84} ry={ry * 0.65} strokeDasharray="2.5 3" opacity=".75" />
+          <g transform="matrix(1,-.13,.65,.46,-18,2)" stroke="none" fill="#cad8b0">
+            <path d="M0 0l8-4v13l-8 4zm12-8 8-4v17l-8 4zm12-8 8-4V2l-8 4z" />
           </g>
-        );
-      })}
-      <ellipse rx={radius} ry={ry} fill="#34634f" />
-      <ellipse rx={radius * 0.9} ry={ry * 0.77} fill="none" strokeWidth=".9" />
-      <ellipse
-        rx={radius * 0.84}
-        ry={ry * 0.65}
-        fill="none"
-        strokeDasharray="2.5 3"
-        opacity=".75"
-      />
-      <g transform="matrix(1,-.13,.65,.46,-18,2)" stroke="none" fill="#cad8b0">
-        <path d="M0 0l8-4v13l-8 4zm12-8 8-4v17l-8 4zm12-8 8-4V2l-8 4z" />
+        </g>
+      </defs>
+      {Array.from({ length: layers - 1 }, (_, i) => (
+        <use key={i} href={`#${rimId}`} y={(layers - i - 1) * 8} />
+      ))}
+      <use href={`#${faceId}`} y={8} />
+      <g className="coin-top">
+        <use href={`#${rimId}`} />
+        <use href={`#${faceId}`} />
       </g>
     </g>
   );
