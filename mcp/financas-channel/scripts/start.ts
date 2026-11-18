@@ -5,12 +5,16 @@ import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Subprocess } from 'bun'
+import {
+  PREFERENCIAS_PADRAO,
+  type Preferencias,
+  type Sessao,
+} from '../../../src/services/ai/chatProtocol.ts'
 import { loadOrCreateToken } from '../src/auth'
 import { TOKEN_DIR } from '../src/config'
+import { lerPreferencias } from '../src/preferencias'
 
 const BASE = 'mcp/financas-channel'
-const DEFAULT_MODEL = 'sonnet'
-const DEFAULT_EFFORT = 'medium'
 const DEV_PORT = 5173
 const ESPERA_SITE_MS = 60_000
 
@@ -63,22 +67,43 @@ export const esperarSite = async (
   return false
 }
 
-const valorOu = (valor: string | undefined, padrao: string): string => valor?.trim() || padrao
+type Env = Readonly<Record<string, string | undefined>>
+
+export type Escolha = Sessao & { origem: 'variável de ambiente' | 'preferência do site' | 'padrão' }
+
+/** Modelo/esforço da sessão: variáveis de ambiente > preferência salva pelo site > padrão. */
+export const escolherModelo = (env: Env, prefs: Preferencias | null): Escolha => {
+  const modeloEnv = env.FINANCAS_MODEL?.trim()
+  const esforcoEnv = env.FINANCAS_EFFORT?.trim()
+  const base = prefs ?? PREFERENCIAS_PADRAO
+  return {
+    modelo: modeloEnv || base.modelo,
+    esforco: esforcoEnv || base.esforco,
+    origem: modeloEnv || esforcoEnv ? 'variável de ambiente' : prefs ? 'preferência do site' : 'padrão',
+  }
+}
 
 /** Argumentos do `claude`. Caminhos relativos à raiz do repositório (o `claude` roda com cwd nela). */
-export const buildClaudeArgs = (
-  env: Readonly<Record<string, string | undefined>>,
-  systemPrompt: string,
-): string[] => [
+export const buildClaudeArgs = (systemPrompt: string, sessao: Sessao): string[] => [
   '--dangerously-load-development-channels', 'server:financas',
   '--strict-mcp-config', '--mcp-config', `${BASE}/mcp.json`,
   '--settings', `${BASE}/settings.json`,
   '--setting-sources', 'project',
   '--tools', '',
   '--system-prompt', systemPrompt,
-  '--model', valorOu(env.FINANCAS_MODEL, DEFAULT_MODEL),
-  '--effort', valorOu(env.FINANCAS_EFFORT, DEFAULT_EFFORT),
+  '--model', sessao.modelo,
+  '--effort', sessao.esforco,
 ]
+
+/** Ambiente do `claude`: token dos hooks, marca de sessão-canal, modelo da sessão e handshake MCP. */
+export const buildClaudeEnv = (base: Env, token: string, sessao: Sessao): Record<string, string | undefined> => ({
+  ...base,
+  FINANCAS_TOKEN: token,
+  FINANCAS_CANAL: '1',
+  FINANCAS_SESSAO_MODELO: sessao.modelo,
+  FINANCAS_SESSAO_ESFORCO: sessao.esforco,
+  MCP_PROTOCOL_NEGOTIATION: 'legacy',
+})
 
 const portaEmUso = async (porta: number): Promise<boolean> => {
   try {
@@ -116,12 +141,12 @@ const abrirNavegador = (url: string) => {
   Bun.spawn(['cmd', '/c', 'start', '', url], { stdout: 'ignore', stderr: 'ignore' })
 }
 
-const iniciarClaude = async (token: string): Promise<number> => {
+const iniciarClaude = async (token: string, sessao: Sessao): Promise<number> => {
   const systemPrompt = readFileSync(join(REPO_ROOT, BASE, 'system-prompt.md'), 'utf8').trim()
-  const proc = Bun.spawn(['claude', ...buildClaudeArgs(process.env, systemPrompt)], {
+  const proc = Bun.spawn(['claude', ...buildClaudeArgs(systemPrompt, sessao)], {
     cwd: REPO_ROOT,
     stdio: ['inherit', 'inherit', 'inherit'],
-    env: { ...process.env, FINANCAS_TOKEN: token, MCP_PROTOCOL_NEGOTIATION: 'legacy' },
+    env: buildClaudeEnv(process.env, token, sessao),
   })
   return proc.exited
 }
@@ -137,10 +162,12 @@ const main = async () => {
     return
   }
   const token = loadOrCreateToken(TOKEN_DIR)
-  console.log(`\nToken do chat (cole em Configurações do site): ${token}\n`)
+  console.log(`\nToken do chat (cole em Configurações do site): ${token}`)
+  const escolha = escolherModelo(process.env, lerPreferencias(TOKEN_DIR))
+  console.log(`Modelo: ${escolha.modelo} · esforço ${escolha.esforco} (${escolha.origem})\n`)
   const vite = modo === 'local' ? await prepararSiteLocal() : null
   abrirNavegador(urlComToken(URLS[modo], token))
-  const codigo = await iniciarClaude(token)
+  const codigo = await iniciarClaude(token, escolha)
   vite?.kill()
   process.exit(codigo)
 }

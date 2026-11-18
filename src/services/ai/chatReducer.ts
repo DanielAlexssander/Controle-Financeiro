@@ -1,4 +1,4 @@
-import type { ServerMessage } from './chatProtocol';
+import type { ServerMessage, Sessao } from './chatProtocol';
 
 export type Conexao = 'sem_token' | 'conectando' | 'conectada' | 'desconectada' | 'recusada' | 'substituida';
 
@@ -14,6 +14,8 @@ export type ChatState = {
   ocupado: boolean;
   mensagens: readonly ChatMensagem[];
   proximoId: number;
+  /** Modelo/esforço com que a sessão aberta foi iniciada (informado pelo canal). */
+  sessao: Sessao | null;
 };
 
 export type ChatAction =
@@ -22,7 +24,13 @@ export type ChatAction =
   | { tipo: 'servidor'; mensagem: ServerMessage }
   | { tipo: 'limpar' };
 
-export const CHAT_INICIAL: ChatState = { conexao: 'sem_token', ocupado: false, mensagens: [], proximoId: 1 };
+export const CHAT_INICIAL: ChatState = {
+  conexao: 'sem_token',
+  ocupado: false,
+  mensagens: [],
+  proximoId: 1,
+  sessao: null,
+};
 
 const MSG_CONEXAO_CAIU = 'A conexão com a IA caiu.';
 
@@ -51,6 +59,8 @@ const aplicarServidor = (s: ChatState, msg: ServerMessage): ChatState => {
   switch (msg.type) {
     case 'status':
       return { ...s, ocupado: msg.estado === 'ocupado' };
+    case 'sessao':
+      return { ...s, sessao: { ...msg.sessao } };
     case 'parcial': {
       const atual = emAndamento(s);
       return atual ? atualizar(s, atual.id, { texto: atual.texto + msg.texto }) : s;

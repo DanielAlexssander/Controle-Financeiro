@@ -42,6 +42,10 @@ export const parseServerMessage = (raw: string): ServerMessage | null => {
   if (m.type === 'status' && (m.estado === 'pronto' || m.estado === 'ocupado')) return { type: 'status', estado: m.estado };
   if ((m.type === 'parcial' || m.type === 'final') && typeof m.texto === 'string') return { type: m.type, texto: m.texto };
   if (m.type === 'erro' && typeof m.mensagem === 'string') return { type: 'erro', mensagem: m.mensagem };
+  if (m.type === 'sessao' && isObject(m.sessao)) {
+    const { modelo, esforco } = m.sessao;
+    if (typeof modelo === 'string' && typeof esforco === 'string') return { type: 'sessao', sessao: { modelo, esforco } };
+  }
   return null;
 };
 

@@ -12,6 +12,11 @@ import { TOKEN_DIR } from '../src/config'
 const BASE = `127.0.0.1:${DEFAULT_BRIDGE_PORT}`
 const token = loadOrCreateToken(TOKEN_DIR)
 
+if (await fetch(`http://${BASE}/nada`).then(() => true, () => false)) {
+  console.error('A porta 8790 está em uso (sessão do financas aberta?). Feche-a e rode o smoke de novo.')
+  process.exit(1)
+}
+
 const check = (ok: unknown, msg: string) => {
   if (!ok) throw new Error(`FALHOU: ${msg}`)
   console.log(`ok - ${msg}`)
@@ -55,13 +60,36 @@ const notificacoes: { method: string; params?: Record<string, unknown> }[] = []
 const client = new Client({ name: 'smoke', version: '0.0.0' })
 client.fallbackNotificationHandler = async (n) => { notificacoes.push(n as (typeof notificacoes)[number]) }
 
-await client.connect(new StdioClientTransport({ command: 'bun', args: ['mcp/financas-channel/src/server.ts'] }))
+const envBase = Object.fromEntries(
+  Object.entries(process.env).filter(([k, v]) => v !== undefined && k !== 'FINANCAS_CANAL'),
+) as Record<string, string>
+const transporte = (canal: boolean) =>
+  new StdioClientTransport({
+    command: 'bun',
+    args: ['mcp/financas-channel/src/server.ts'],
+    env: canal
+      ? { ...envBase, FINANCAS_CANAL: '1', FINANCAS_SESSAO_MODELO: 'sonnet', FINANCAS_SESSAO_ESFORCO: 'medium' }
+      : envBase,
+  })
+
+// 1) Sessão comum do Claude (MCP global): tem que ficar inerte.
+const inerte = new Client({ name: 'smoke-inerte', version: '0.0.0' })
+await inerte.connect(transporte(false))
+check(inerte.getInstructions() === undefined, 'sessão comum: MCP conecta sem instruções')
+check(!inerte.getServerCapabilities()?.experimental, 'sessão comum: sem capacidade de canal')
+check(!(await fetch(`http://${BASE}/nada`).then(() => true, () => false)), 'sessão comum: porta 8790 fechada')
+await inerte.close()
+
+// 2) Sessão aberta pelo `financas`: canal completo.
+await client.connect(transporte(true))
 try {
   check(client.getServerCapabilities()?.experimental?.['claude/channel'], 'servidor declara claude/channel')
   check(client.getInstructions()?.includes('source="financas"'), 'instructions presentes')
 
   const { ws, recebidas } = await openWs()
   await waitFor(() => recebidas.find((m) => m.type === 'status'), 'status inicial')
+  const sessao = await waitFor(() => recebidas.find((m) => m.type === 'sessao'), 'sessão')
+  check(sessao.type === 'sessao' && sessao.sessao.modelo === 'sonnet', 'site recebe o modelo da sessão aberta')
   ws.send(JSON.stringify({ type: 'snapshot', data: { totais: { patrimonioBrl: 1 } } }))
   await Bun.sleep(100)
   check(notificacoes.length === 0, 'snapshot sozinho não gera notificação (uso parado = zero)')

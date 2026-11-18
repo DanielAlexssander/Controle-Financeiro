@@ -1,8 +1,8 @@
 import { test, expect } from 'bun:test'
-import { buildClaudeArgs } from '../scripts/start'
+import { buildClaudeArgs, escolherModelo } from '../scripts/start'
 
-test('args base do claude: sonnet com esforço medium por padrão', () =>
-  expect(buildClaudeArgs({}, 'PROMPT')).toEqual([
+test('args do claude com o modelo escolhido', () =>
+  expect(buildClaudeArgs('PROMPT', { modelo: 'sonnet', esforco: 'medium' })).toEqual([
     '--dangerously-load-development-channels', 'server:financas',
     '--strict-mcp-config', '--mcp-config', 'mcp/financas-channel/mcp.json',
     '--settings', 'mcp/financas-channel/settings.json',
@@ -13,15 +13,20 @@ test('args base do claude: sonnet com esforço medium por padrão', () =>
     '--effort', 'medium',
   ]))
 
-test('FINANCAS_MODEL troca o modelo', () =>
-  expect(buildClaudeArgs({ FINANCAS_MODEL: 'opus' }, 'P').slice(-4)).toEqual(['--model', 'opus', '--effort', 'medium']))
+test('escolherModelo: sem nada usa o padrão (sonnet, medium)', () =>
+  expect(escolherModelo({}, null)).toEqual({ modelo: 'sonnet', esforco: 'medium', origem: 'padrão' }))
 
-test('FINANCAS_EFFORT troca o esforço', () =>
-  expect(buildClaudeArgs({ FINANCAS_EFFORT: 'high' }, 'P').slice(-4)).toEqual(['--model', 'sonnet', '--effort', 'high']))
+test('escolherModelo: usa a preferência salva pelo site', () =>
+  expect(escolherModelo({}, { modelo: 'opus', esforco: 'high' }))
+    .toEqual({ modelo: 'opus', esforco: 'high', origem: 'preferência do site' }))
 
-test('valores vazios usam o padrão', () =>
-  expect(buildClaudeArgs({ FINANCAS_MODEL: '  ', FINANCAS_EFFORT: '' }, 'P').slice(-4))
-    .toEqual(['--model', 'sonnet', '--effort', 'medium']))
+test('escolherModelo: variáveis de ambiente vencem a preferência', () =>
+  expect(escolherModelo({ FINANCAS_MODEL: 'haiku', FINANCAS_EFFORT: 'low' }, { modelo: 'opus', esforco: 'high' }))
+    .toEqual({ modelo: 'haiku', esforco: 'low', origem: 'variável de ambiente' }))
+
+test('escolherModelo: variável vazia é ignorada', () =>
+  expect(escolherModelo({ FINANCAS_MODEL: '  ', FINANCAS_EFFORT: '' }, { modelo: 'opus', esforco: 'high' }))
+    .toEqual({ modelo: 'opus', esforco: 'high', origem: 'preferência do site' }))
 
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'

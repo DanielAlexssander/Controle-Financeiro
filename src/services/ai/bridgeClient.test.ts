@@ -117,3 +117,11 @@ describe('helpers', () => {
     expect(parseServerMessage('null')).toBeNull();
   });
 });
+
+describe('parseServerMessage: sessao', () => {
+  it('aceita a sessão com modelo e esforço', () =>
+    expect(parseServerMessage('{"type":"sessao","sessao":{"modelo":"opus","esforco":"high"}}'))
+      .toEqual({ type: 'sessao', sessao: { modelo: 'opus', esforco: 'high' } }));
+  it('rejeita sessão incompleta', () =>
+    expect(parseServerMessage('{"type":"sessao","sessao":{"modelo":"opus"}}')).toBeNull());
+});

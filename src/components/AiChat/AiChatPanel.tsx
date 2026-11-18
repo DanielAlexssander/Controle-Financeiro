@@ -5,10 +5,11 @@ import { useFinance } from '../../context/FinanceContext';
 import { useAiBridge } from '../../hooks/useAiBridge';
 import { useAllCryptoPrices } from '../../hooks/useAllCryptoPrices';
 import { useCurrencyRates } from '../../hooks/useCurrencyRates';
-import { loadAiToken } from '../../services/ai/aiSettings';
+import { loadAiPreferencias, loadAiToken } from '../../services/ai/aiSettings';
 import { buildSnapshot } from '../../services/ai/buildSnapshot';
 import { MAX_PERGUNTA_CHARS } from '../../services/ai/chatProtocol';
 import type { Conexao } from '../../services/ai/chatReducer';
+import { descreverSessao } from '../../services/ai/sessaoInfo';
 import { darkColors, lightColors } from '../../theme/colors';
 import { ChatMessage } from './ChatMessage';
 
@@ -30,7 +31,9 @@ export const AiChatPanel = () => {
   const { usdToBrl } = useCurrencyRates();
   const snapshot = useMemo(() => buildSnapshot(data, prices, usdToBrl), [data, prices, usdToBrl]);
   const [token] = useState(loadAiToken);
-  const { state, enviar, limpar } = useAiBridge(snapshot, token);
+  const [preferencias] = useState(loadAiPreferencias);
+  const { state, enviar, limpar } = useAiBridge(snapshot, token, preferencias);
+  const sessaoInfo = descreverSessao(state.sessao, preferencias);
   const [texto, setTexto] = useState('');
   const fimRef = useRef<HTMLDivElement>(null);
 
@@ -64,6 +67,13 @@ export const AiChatPanel = () => {
           Limpar chat
         </Button>
       </HStack>
+
+      {sessaoInfo.atual && (
+        <Box fontSize="xs" mt={-1}>
+          <Text color={colors.textMuted}>Modelo da sessão: {sessaoInfo.atual}</Text>
+          {sessaoInfo.aviso && <Text color={colors.warning}>{sessaoInfo.aviso}</Text>}
+        </Box>
+      )}
 
       <Box flex={1} overflowY="auto" pr={1}>
         <VStack spacing={3} align="stretch">

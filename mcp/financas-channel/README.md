@@ -23,6 +23,12 @@ site ──WebSocket 127.0.0.1:8790──► canal financas ──notificação�
 Instalação (já feita nesta máquina): `cd mcp/financas-channel && npm link`. Para remover: `npm unlink -g financas-channel`.
 O `/financas` fica em `~/.claude/commands/financas.md`.
 
+O MCP também está registrado como **global** (aparece no `/mcp` de toda sessão):
+`claude mcp add --scope user financas -- bun "<projeto>/mcp/financas-channel/src/server.ts"`.
+Fora da sessão aberta pelo `financas` ele fica **inerte**: conecta, mas não abre a porta 8790, não vira canal e
+não manda instruções (só o launcher define `FINANCAS_CANAL=1`). Assim nenhuma outra sessão "rouba" o chat.
+Para remover: `claude mcp remove --scope user financas`.
+
 O chat funciona nos dois ambientes porque quem conecta no canal é o seu Chrome:
 - **Token automático:** o `financas` abre o site com `#ia=<token>`. O site salva o token, apaga esse trecho da barra
   de endereço e abre o chat sozinho. O fragmento (`#…`) nunca é enviado ao servidor.
@@ -42,9 +48,14 @@ O chat funciona nos dois ambientes porque quem conecta no canal é o seu Chrome:
 
 Deixe o terminal do `npm run ia` aberto enquanto usar o chat. `/clear` nele faz a IA esquecer a conversa.
 
-Por padrão a sessão abre com **Sonnet** e esforço **medium**. Para trocar, use as variáveis
-`FINANCAS_MODEL` e `FINANCAS_EFFORT`, por exemplo `FINANCAS_MODEL=opus FINANCAS_EFFORT=high npm run ia`
-(no PowerShell: `$env:FINANCAS_MODEL='opus'; $env:FINANCAS_EFFORT='high'; npm run ia`).
+**Modelo da sessão** (prioridade de cima para baixo):
+1. Variáveis `FINANCAS_MODEL` / `FINANCAS_EFFORT` (PowerShell: `$env:FINANCAS_MODEL='opus'; financas`).
+2. **Preferência do site**: Configurações → Assistente de IA → Modelo. O chat entrega a preferência ao canal quando
+   conecta; ela fica em `~/.claude/channels/financas/preferencias.json` e vale no **próximo** `financas`.
+   Enquanto a sessão aberta estiver com outro modelo, o chat mostra o aviso.
+3. Padrão: **Sonnet**, esforço **medium**.
+
+O terminal mostra qual foi usado, por exemplo `Modelo: opus · esforço high (preferência do site)`.
 
 ## Uso do plano
 

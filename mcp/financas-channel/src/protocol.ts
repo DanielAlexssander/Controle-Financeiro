@@ -1,8 +1,11 @@
 import {
+  ESFORCOS,
   MAX_PERGUNTA_CHARS,
   MAX_SNAPSHOT_BYTES,
+  MODELOS,
   type ClientMessage,
   type FinanceSnapshot,
+  type Preferencias,
 } from '../../../src/services/ai/chatProtocol.ts'
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -21,6 +24,15 @@ const parseSnapshot = (msg: Record<string, unknown>): ClientMessage | null => {
   return { type: 'snapshot', data: msg.data as unknown as FinanceSnapshot }
 }
 
+/** Modelo e esforço só valem se forem exatamente um dos permitidos. */
+export const parsePreferencias = (value: unknown): Preferencias | null => {
+  if (!isPlainObject(value)) return null
+  const { modelo, esforco } = value
+  const modeloOk = (MODELOS as readonly unknown[]).includes(modelo)
+  const esforcoOk = (ESFORCOS as readonly unknown[]).includes(esforco)
+  return modeloOk && esforcoOk ? ({ modelo, esforco } as Preferencias) : null
+}
+
 /** Valida uma mensagem vinda do site. Devolve null para qualquer entrada inválida. */
 export const parseClientMessage = (raw: string): ClientMessage | null => {
   if (Buffer.byteLength(raw) > MAX_SNAPSHOT_BYTES) return null
@@ -33,5 +45,9 @@ export const parseClientMessage = (raw: string): ClientMessage | null => {
   if (!isPlainObject(msg)) return null
   if (msg.type === 'pergunta') return parsePergunta(msg)
   if (msg.type === 'snapshot') return parseSnapshot(msg)
+  if (msg.type === 'preferencias') {
+    const preferencias = parsePreferencias(msg.preferencias)
+    return preferencias ? { type: 'preferencias', preferencias } : null
+  }
   return null
 }

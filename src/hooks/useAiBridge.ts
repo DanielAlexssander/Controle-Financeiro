@@ -1,22 +1,30 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { bridgeUrl, createBridgeClient, type BridgeClient } from '../services/ai/bridgeClient';
-import type { FinanceSnapshot } from '../services/ai/chatProtocol';
+import type { FinanceSnapshot, Preferencias } from '../services/ai/chatProtocol';
 import { CHAT_INICIAL, chatReducer, type ChatState } from '../services/ai/chatReducer';
 
 const MSG_DESCONECTADA = 'A IA está desconectada. Rode npm run ia.';
 
 export type AiBridge = { state: ChatState; enviar(texto: string): void; limpar(): void };
 
-/** Liga o chat ao canal local. Conectar/reconectar e enviar dados nunca acionam o modelo. */
-export const useAiBridge = (snapshot: FinanceSnapshot | null, token: string): AiBridge => {
+/**
+ * Liga o chat ao canal local. Conectar/reconectar, enviar dados e enviar a preferência de modelo
+ * nunca acionam o modelo. A preferência fica salva no PC e vale no próximo `financas`.
+ */
+export const useAiBridge = (snapshot: FinanceSnapshot | null, token: string, preferencias: Preferencias): AiBridge => {
   const [state, dispatch] = useReducer(chatReducer, CHAT_INICIAL);
   const clientRef = useRef<BridgeClient | null>(null);
   const snapshotJson = useMemo(() => (snapshot ? JSON.stringify(snapshot) : null), [snapshot]);
   const snapshotJsonRef = useRef<string | null>(snapshotJson);
+  const preferenciasRef = useRef<Preferencias>(preferencias);
 
   useEffect(() => {
     snapshotJsonRef.current = snapshotJson;
   }, [snapshotJson]);
+
+  useEffect(() => {
+    preferenciasRef.current = preferencias;
+  }, [preferencias]);
 
   useEffect(() => {
     if (!token) return;
@@ -29,7 +37,9 @@ export const useAiBridge = (snapshot: FinanceSnapshot | null, token: string): Ai
       onServerMessage: (mensagem) => dispatch({ tipo: 'servidor', mensagem }),
       onConexao: (conexao) => {
         dispatch({ tipo: 'conexao', conexao });
-        if (conexao === 'conectada') enviarSnapshot(client);
+        if (conexao !== 'conectada') return;
+        enviarSnapshot(client);
+        client.send({ type: 'preferencias', preferencias: preferenciasRef.current });
       },
     });
     clientRef.current = client;

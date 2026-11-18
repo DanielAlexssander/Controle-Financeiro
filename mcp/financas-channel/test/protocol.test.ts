@@ -24,3 +24,13 @@ describe('parseClientMessage', () => {
   test('rejeita tipo desconhecido', () =>
     expect(parseClientMessage(JSON.stringify({ type: 'outro' }))).toBeNull())
 })
+
+describe('parseClientMessage: preferencias', () => {
+  test('aceita modelo e esforço válidos', () =>
+    expect(parseClientMessage(JSON.stringify({ type: 'preferencias', preferencias: { modelo: 'opus', esforco: 'high' } })))
+      .toEqual({ type: 'preferencias', preferencias: { modelo: 'opus', esforco: 'high' } }))
+  test('rejeita modelo desconhecido', () =>
+    expect(parseClientMessage(JSON.stringify({ type: 'preferencias', preferencias: { modelo: 'gpt', esforco: 'high' } }))).toBeNull())
+  test('rejeita esforço desconhecido', () =>
+    expect(parseClientMessage(JSON.stringify({ type: 'preferencias', preferencias: { modelo: 'opus', esforco: 'max' } }))).toBeNull())
+})

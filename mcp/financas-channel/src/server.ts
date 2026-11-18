@@ -6,15 +6,24 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   DEFAULT_BRIDGE_PORT,
   type ClientMessage,
+  type Preferencias,
   type ServerMessage,
+  type Sessao,
 } from '../../../src/services/ai/chatProtocol.ts'
 import { loadOrCreateToken } from './auth'
 import { startBridge } from './bridge'
 import { buildChannelContent } from './channelContent'
-import { ALLOWED_ORIGINS, RESPOSTA_TIMEOUT_MS, TOKEN_DIR } from './config'
+import { ALLOWED_ORIGINS, RESPOSTA_TIMEOUT_MS, TOKEN_DIR, deveAbrirCanal } from './config'
 import { IDLE, step, type ConversationEvent } from './conversation'
 import type { HookEvent } from './hookPayload'
+import { salvarPreferencias } from './preferencias'
 import { EMPTY_SNAPSHOT, setSnapshot, takeIfChanged } from './snapshotStore'
+
+/** O launcher informa com que modelo/esforço iniciou a sessão (FINANCAS_SESSAO_*). */
+export const sessaoDoAmbiente = (env: Readonly<Record<string, string | undefined>>): Sessao | null =>
+  env.FINANCAS_SESSAO_MODELO && env.FINANCAS_SESSAO_ESFORCO
+    ? { modelo: env.FINANCAS_SESSAO_MODELO, esforco: env.FINANCAS_SESSAO_ESFORCO }
+    : null
 
 export const INSTRUCTIONS =
   'Mensagens do chat do site Controle Financeiro chegam como <channel source="financas">. ' +
@@ -27,6 +36,9 @@ export type WiringDeps = {
   notify(content: string): Promise<void>
   send(msg: ServerMessage): void
   timeoutMs: number
+  salvarPreferencias(prefs: Preferencias): void
+  /** Modelo/esforço com que esta sessão foi iniciada (null se desconhecido). */
+  sessao: Sessao | null
 }
 
 export type Wiring = {
@@ -68,16 +80,28 @@ export const createWiring = (deps: WiringDeps): Wiring => {
   }
 
   return {
-    onConnect: () => deps.send({ type: 'status', estado: conversa.emAndamento ? 'ocupado' : 'pronto' }),
+    onConnect: () => {
+      deps.send({ type: 'status', estado: conversa.emAndamento ? 'ocupado' : 'pronto' })
+      if (deps.sessao) deps.send({ type: 'sessao', sessao: deps.sessao })
+    },
     onClientMessage: (msg) => {
       if (msg.type === 'snapshot') snapshot = setSnapshot(snapshot, msg.data)
+      else if (msg.type === 'preferencias') deps.salvarPreferencias(msg.preferencias)
       else perguntar(msg.texto)
     },
     onHook: (ev) => { aplicar(ev) },
   }
 }
 
+/** Sessão comum do Claude (MCP global): conecta sem porta, sem canal e sem instruções. */
+const mainInerte = async () => {
+  const mcp = new Server({ name: 'financas', version: '0.1.0' }, { capabilities: {} })
+  await mcp.connect(new StdioServerTransport())
+  console.error('[financas] modo inerte: o canal só abre na sessão iniciada pelo comando financas')
+}
+
 const main = async () => {
+  if (!deveAbrirCanal(process.env)) return mainInerte()
   const mcp = new Server(
     { name: 'financas', version: '0.1.0' },
     { capabilities: { experimental: { 'claude/channel': {} } }, instructions: INSTRUCTIONS },
@@ -90,6 +114,14 @@ const main = async () => {
       mcp.notification({ method: 'notifications/claude/channel', params: { content, meta: { origem: 'site' } } }),
     send: (msg) => send(msg),
     timeoutMs: RESPOSTA_TIMEOUT_MS,
+    salvarPreferencias: (prefs) => {
+      try {
+        salvarPreferencias(TOKEN_DIR, prefs)
+      } catch (err: unknown) {
+        console.error('[financas] não foi possível salvar as preferências:', err)
+      }
+    },
+    sessao: sessaoDoAmbiente(process.env),
   })
   const bridge = startBridge({
     port: DEFAULT_BRIDGE_PORT,

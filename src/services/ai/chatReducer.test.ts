@@ -8,7 +8,7 @@ const servidor = (s: ChatState, mensagem: ServerMessage) =>
 
 describe('chatReducer', () => {
   it('começa sem token e sem mensagens', () =>
-    expect(CHAT_INICIAL).toEqual({ conexao: 'sem_token', ocupado: false, mensagens: [], proximoId: 1 }));
+    expect(CHAT_INICIAL).toEqual({ conexao: 'sem_token', ocupado: false, mensagens: [], proximoId: 1, sessao: null }));
 
   it('enviada cria a pergunta e uma resposta "escrevendo", e marca ocupado', () => {
     const s = enviar(CHAT_INICIAL, 'Quanto tenho?');
@@ -76,4 +76,10 @@ describe('chatReducer', () => {
     servidor(antes, { type: 'parcial', texto: 'x' });
     expect(antes).toEqual(copia);
   });
+});
+
+describe('chatReducer: sessão', () => {
+  it('guarda o modelo da sessão aberta', () =>
+    expect(chatReducer(CHAT_INICIAL, { tipo: 'servidor', mensagem: { type: 'sessao', sessao: { modelo: 'sonnet', esforco: 'medium' } } }).sessao)
+      .toEqual({ modelo: 'sonnet', esforco: 'medium' }));
 });

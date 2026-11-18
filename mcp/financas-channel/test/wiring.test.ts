@@ -1,18 +1,21 @@
 import { test, expect } from 'bun:test'
 import { createWiring } from '../src/server'
 import { buildChannelContent } from '../src/channelContent'
-import type { ServerMessage } from '../../../src/services/ai/chatProtocol.ts'
+import type { Preferencias, ServerMessage, Sessao } from '../../../src/services/ai/chatProtocol.ts'
 import { snap } from './fixtures'
 
-const setup = (opts: { timeoutMs?: number; falhar?: boolean } = {}) => {
+const setup = (opts: { timeoutMs?: number; falhar?: boolean; sessao?: Sessao } = {}) => {
   const notified: string[] = []
   const sent: ServerMessage[] = []
+  const salvas: Preferencias[] = []
   const w = createWiring({
     notify: async (c) => { notified.push(c); if (opts.falhar) throw new Error('x') },
     send: (m) => { sent.push(m) },
     timeoutMs: opts.timeoutMs ?? 10_000,
+    salvarPreferencias: (p) => { salvas.push(p) },
+    sessao: opts.sessao ?? null,
   })
-  return { w, notified, sent }
+  return { w, notified, sent, salvas }
 }
 const pergunta = (texto: string) => ({ type: 'pergunta' as const, ia: 'claude' as const, texto })
 const tick = (ms = 10) => new Promise((r) => setTimeout(r, ms))
@@ -102,5 +105,22 @@ test('onConnect envia o status atual', () => {
     { type: 'status', estado: 'pronto' },
     { type: 'status', estado: 'ocupado' },
     { type: 'status', estado: 'ocupado' },
+  ])
+})
+
+test('preferências são salvas e não acionam o modelo', () => {
+  const { w, notified, sent, salvas } = setup()
+  w.onClientMessage({ type: 'preferencias', preferencias: { modelo: 'opus', esforco: 'high' } })
+  expect(salvas).toEqual([{ modelo: 'opus', esforco: 'high' }])
+  expect(notified).toEqual([])
+  expect(sent).toEqual([])
+})
+
+test('onConnect informa a sessão aberta quando conhecida', () => {
+  const { w, sent } = setup({ sessao: { modelo: 'sonnet', esforco: 'medium' } })
+  w.onConnect()
+  expect(sent).toEqual([
+    { type: 'status', estado: 'pronto' },
+    { type: 'sessao', sessao: { modelo: 'sonnet', esforco: 'medium' } },
   ])
 })
