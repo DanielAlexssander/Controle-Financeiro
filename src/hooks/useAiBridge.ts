@@ -3,7 +3,7 @@ import { bridgeUrl, createBridgeClient, type BridgeClient } from '../services/ai
 import type { FinanceSnapshot, Preferencias } from '../services/ai/chatProtocol';
 import { CHAT_INICIAL, chatReducer, type ChatState } from '../services/ai/chatReducer';
 
-const MSG_DESCONECTADA = 'A IA está desconectada. Rode npm run ia.';
+const MSG_DESCONECTADA = 'A IA está desconectada. Rode financas no terminal.';
 
 export type AiBridge = { state: ChatState; enviar(texto: string): void; limpar(): void };
 

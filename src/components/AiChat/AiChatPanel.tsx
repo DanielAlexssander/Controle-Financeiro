@@ -17,7 +17,7 @@ const STATUS: Record<Conexao, { texto: string; cor: string }> = {
   sem_token: { texto: 'Configure o token do chat em Configurações.', cor: 'orange' },
   conectando: { texto: 'Conectando à IA…', cor: 'gray' },
   conectada: { texto: 'Claude conectado', cor: 'green' },
-  desconectada: { texto: 'IA desconectada — rode `npm run ia`.', cor: 'red' },
+  desconectada: { texto: 'IA desconectada — rode financas no terminal.', cor: 'red' },
   recusada: { texto: 'Token inválido. Atualize em Configurações.', cor: 'red' },
   substituida: { texto: 'O chat foi aberto em outra aba.', cor: 'orange' },
 };
