@@ -41,6 +41,9 @@ export const parseModo = (args: readonly string[]): Modo | null => {
 
 export const precisaSubirDevServer = (portaEmUso: boolean): boolean => !portaEmUso
 
+/** O site lê o token do fragmento (#), salva, limpa a barra de endereço e abre o chat. */
+export const urlComToken = (url: string, token: string): string => `${url}#ia=${token}`
+
 /** Tenta o `url` até responder ok ou o tempo acabar. Erro de conexão conta como "ainda não". */
 export const esperarSite = async (
   url: string,
@@ -136,7 +139,7 @@ const main = async () => {
   const token = loadOrCreateToken(TOKEN_DIR)
   console.log(`\nToken do chat (cole em Configurações do site): ${token}\n`)
   const vite = modo === 'local' ? await prepararSiteLocal() : null
-  abrirNavegador(URLS[modo])
+  abrirNavegador(urlComToken(URLS[modo], token))
   const codigo = await iniciarClaude(token)
   vite?.kill()
   process.exit(codigo)

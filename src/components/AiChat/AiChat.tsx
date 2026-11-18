@@ -4,8 +4,8 @@ import {
 import { FaRobot } from 'react-icons/fa';
 import { AiChatPanel } from './AiChatPanel';
 
-export const AiChat = () => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+export const AiChat = ({ abrirAoIniciar = false }: { abrirAoIniciar?: boolean }) => {
+  const { isOpen, onOpen, onClose } = useDisclosure({ defaultIsOpen: abrirAoIniciar });
 
   return (
     <>

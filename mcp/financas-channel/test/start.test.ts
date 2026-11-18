@@ -64,3 +64,9 @@ test('esperarSite: false no tempo limite', async () => {
   const fakeFetch = (async () => new Response('', { status: 503 })) as unknown as typeof fetch
   expect(await esperarSite('http://x', 30, 5, fakeFetch)).toBe(false)
 })
+
+import { urlComToken } from '../scripts/start'
+
+test('urlComToken coloca o token no fragmento (#), que não vai ao servidor', () =>
+  expect(urlComToken(URLS.pages, 'a'.repeat(64)))
+    .toBe(`https://danielalexssander.github.io/Controle-Financeiro/#ia=${'a'.repeat(64)}`))

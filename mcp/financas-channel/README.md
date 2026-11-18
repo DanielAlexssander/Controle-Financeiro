@@ -24,9 +24,9 @@ Instalação (já feita nesta máquina): `cd mcp/financas-channel && npm link`. 
 O `/financas` fica em `~/.claude/commands/financas.md`.
 
 O chat funciona nos dois ambientes porque quem conecta no canal é o seu Chrome:
-- **Local:** nada a configurar além do token.
-- **GitHub Pages:** na primeira vez o Chrome pergunta se o site pode acessar a rede local: permita. Cole o token em
-  Configurações (cada endereço guarda o seu). O Pages só mostra o chat depois que o código for publicado.
+- **Token automático:** o `financas` abre o site com `#ia=<token>`. O site salva o token, apaga esse trecho da barra
+  de endereço e abre o chat sozinho. O fragmento (`#…`) nunca é enviado ao servidor.
+- **GitHub Pages:** na primeira vez o Chrome pergunta se o site pode acessar a rede local: permita (só uma vez).
 
 ## Como usar
 
@@ -36,7 +36,8 @@ O chat funciona nos dois ambientes porque quem conecta no canal é o seu Chrome:
 3. O Claude Code abre um aviso de canais de desenvolvimento: escolha
    **"I am using this for local development"**.
 4. Confira o aviso abaixo do banner: `Channels (experimental) messages from server:financas inject directly in this session`.
-5. No site que o comando abriu, vá em **Configurações → Assistente de IA**, cole o token e salve (uma vez por endereço).
+5. O site abre com o chat já conectado (o token vai junto no endereço). Se abrir o site por outro caminho, o token
+   também pode ser colado em **Configurações → Assistente de IA**.
 6. Abra o chat pelo botão do robô no canto inferior direito.
 
 Deixe o terminal do `npm run ia` aberto enquanto usar o chat. `/clear` nele faz a IA esquecer a conversa.

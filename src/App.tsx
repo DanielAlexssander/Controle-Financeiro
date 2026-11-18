@@ -9,7 +9,7 @@ import { ConfigPage } from './pages/ConfigPage';
 import { AiChat } from './components/AiChat/AiChat';
 import theme from './theme/theme';
 
-function App() {
+function App({ abrirChatAoIniciar = false }: { abrirChatAoIniciar?: boolean }) {
   const [currentPage, setCurrentPage] = useState('dashboard');
 
   const renderPage = () => {
@@ -33,7 +33,7 @@ function App() {
       <FinanceProvider>
         <Navbar currentPage={currentPage} onNavigate={setCurrentPage} />
         {renderPage()}
-        <AiChat />
+        <AiChat abrirAoIniciar={abrirChatAoIniciar} />
       </FinanceProvider>
     </ChakraProvider>
   );
