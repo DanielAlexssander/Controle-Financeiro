@@ -8,6 +8,7 @@ import { useRef } from 'react';
 import { FaMoon, FaSun, FaDownload, FaUpload, FaTrash, FaInfoCircle, FaShieldAlt, FaDatabase, FaGithub } from 'react-icons/fa';
 import { lightColors, darkColors } from '../theme/colors';
 import type { FinanceData } from '../types/index.js';
+import { AiSettingsCard } from '../components/AiChat/AiSettingsCard';
 
 export const ConfigPage = () => {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -164,6 +165,8 @@ export const ConfigPage = () => {
               </Flex>
             </CardBody>
           </Card>
+
+          <AiSettingsCard />
 
           {/* Data Management */}
           <Card>

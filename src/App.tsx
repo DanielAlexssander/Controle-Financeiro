@@ -6,6 +6,7 @@ import { Dashboard } from './pages/Dashboard';
 import { ManagePage } from './pages/ManagePage';
 import { GrowthPage } from './pages/GrowthPage';
 import { ConfigPage } from './pages/ConfigPage';
+import { AiChat } from './components/AiChat/AiChat';
 import theme from './theme/theme';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
       <FinanceProvider>
         <Navbar currentPage={currentPage} onNavigate={setCurrentPage} />
         {renderPage()}
+        <AiChat />
       </FinanceProvider>
     </ChakraProvider>
   );

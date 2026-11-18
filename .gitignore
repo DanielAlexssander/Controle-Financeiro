@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Relatórios de cobertura de testes
+coverage
+
+# Ferramentas de IA (não são necessárias para rodar o projeto)
+.serena/
+.superpowers/
+docs/superpowers/

@@ -1,0 +1,55 @@
+{
+  "hooks": {
+    "MessageDisplay": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:8790/hooks/display",
+            "timeout": 5,
+            "headers": {
+              "Authorization": "Bearer $FINANCAS_TOKEN"
+            },
+            "allowedEnvVars": [
+              "FINANCAS_TOKEN"
+            ]
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:8790/hooks/stop",
+            "timeout": 5,
+            "headers": {
+              "Authorization": "Bearer $FINANCAS_TOKEN"
+            },
+            "allowedEnvVars": [
+              "FINANCAS_TOKEN"
+            ]
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:8790/hooks/stop-failure",
+            "timeout": 5,
+            "headers": {
+              "Authorization": "Bearer $FINANCAS_TOKEN"
+            },
+            "allowedEnvVars": [
+              "FINANCAS_TOKEN"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
